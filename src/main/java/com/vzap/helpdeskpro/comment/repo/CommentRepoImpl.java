@@ -11,25 +11,16 @@ package com.vzap.helpdeskpro.comment.repo;
 import com.vzap.helpdeskpro.comment.model.Comment;
 import com.vzap.helpdeskpro.config.DBConfig;
 import jakarta.inject.Singleton;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Singleton
 public class CommentRepoImpl implements CommentRepo {
 
     @Override
     public Optional<Comment> createComment(Comment comment) {
-        String sql = "INSERT INTO comment "
-                + "(commentId, ticketId, authorId, content, createdAt) "
-                + "VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO comment (commentId, ticketId, authorId, content, createdAt) VALUES (?, ?, ?, ?, ?)";
 
         if (comment.getCommentId() == null) {
             comment.setCommentId(UUID.randomUUID());
@@ -85,8 +76,7 @@ public class CommentRepoImpl implements CommentRepo {
     public List<Comment> findByTicketId(UUID ticketId) {
         List<Comment> comments = new ArrayList<>();
 
-        String sql = "SELECT * FROM comment WHERE ticketId = ? "
-                + "ORDER BY createdAt";
+        String sql = "SELECT * FROM comment WHERE ticketId = ? ORDER BY createdAt";
 
         try (Connection con = DBConfig.getCon();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -129,8 +119,7 @@ public class CommentRepoImpl implements CommentRepo {
 
     @Override
     public Optional<Comment> updateComment(Comment comment) {
-        String sql = "UPDATE comment SET ticketId = ?, authorId = ?, "
-                + "content = ?, createdAt = ? WHERE commentId = ?";
+        String sql = "UPDATE comment SET ticketId = ?, authorId = ?, content = ?, createdAt = ? WHERE commentId = ?";
 
         try (Connection con = DBConfig.getCon();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -172,6 +161,7 @@ public class CommentRepoImpl implements CommentRepo {
         return Optional.empty();
     }
 
+    
     private Comment mapComment(ResultSet rs) throws SQLException {
         return Comment.builder()
                 .commentId(UUID.fromString(rs.getString("commentId")))
