@@ -13,12 +13,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+// Persistence operations for ticket comments.
 public interface CommentRepo {
 
     Optional<Comment> createComment(Comment comment);
 
     Optional<Comment> findById(UUID commentId);
 
+    //Returns comments oldest-first; comments with equal timestamps are ordered by ID.
     List<Comment> findByTicketId(UUID ticketId);
 
     List<Comment> findAll();
