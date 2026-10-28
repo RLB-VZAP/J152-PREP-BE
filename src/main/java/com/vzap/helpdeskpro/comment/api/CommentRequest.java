@@ -8,6 +8,18 @@ package com.vzap.helpdeskpro.comment.api;
  *
  * @author 123iz
  */
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+//Request body for creating a comment.
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
 public class CommentRequest {
-    
+    private String content;
 }
+
