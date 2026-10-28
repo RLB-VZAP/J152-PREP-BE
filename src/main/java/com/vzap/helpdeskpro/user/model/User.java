@@ -10,6 +10,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 /**
  *
@@ -20,6 +21,7 @@ import lombok.Setter;
 @Builder
 @Getter
 @Setter
+@ToString
 public class User {
     private UUID userId;
     private String email, passwordHash, fullName;

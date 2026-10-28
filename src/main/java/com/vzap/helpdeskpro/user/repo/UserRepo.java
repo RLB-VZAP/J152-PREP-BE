@@ -18,7 +18,7 @@ public interface UserRepo {
     Optional<User> createUser(User user);
     Optional<User> findById(UUID userId);
     Optional<User> findByEmailAndPassword(User user);
-    Optional<User> finByEmail(String email);
+    Optional<User> findByEmail(String email);
     List<User> findByRole(Role role);
     List<User> findAll();
     Optional<User> updateUser(User user);
