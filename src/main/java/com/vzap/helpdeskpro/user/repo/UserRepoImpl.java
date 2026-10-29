@@ -86,7 +86,33 @@ public class UserRepoImpl implements UserRepo {
 
     @Override
     public List<User> findByRole(Role role) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        List<User> users = new ArrayList<>();
+        String query = "SELECT * FROM user WHERE role = ?";
+      
+        
+        try(Connection con = DBConfig.getCon(); PreparedStatement ps = con.prepareStatement(query)){
+            ps.setString(1, role.name());
+            
+            try(ResultSet rs = ps.executeQuery()){
+                while(rs.next()){
+                    User user = User.builder()
+                                .email(rs.getString("email"))
+                                .fullName(rs.getString("fullName"))
+                                .passwordHash(rs.getString("passwordHash"))
+                                .userId(UUID.fromString(rs.getString("userId")))
+                                .role(role)
+                                .active(rs.getBoolean("active"))
+                                .build();
+                    users.add(user);
+                }
+            }
+            
+            
+        }catch(SQLException e){
+            LOG.log(System.Logger.Level.ERROR, e);
+        }
+        
+        return users;
     }
 
     @Override

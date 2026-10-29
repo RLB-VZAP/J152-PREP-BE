@@ -5,6 +5,7 @@
 package com.vzap.helpdeskpro.user.service;
 
 import com.vzap.helpdeskpro.commons.ServiceResponse;
+import com.vzap.helpdeskpro.user.model.Role;
 import com.vzap.helpdeskpro.user.model.User;
 import com.vzap.helpdeskpro.user.repo.UserRepo;
 import com.vzap.helpdeskpro.util.HashUtil;
@@ -12,6 +13,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.core.Response;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -50,6 +53,21 @@ public class UserServiceImpl implements UserService {
         } catch (Exception e) {
             return ServiceResponse.error(Response.Status.BAD_REQUEST, "Something went wrong during registration, please try again later");
         }
+    }
+    
+    @Override
+    public List<User>getActiveTechs(){
+        List<User>techs = userRepo.findByRole(Role.TECHNICIAN),
+                activeTechs = new ArrayList<>();
+        
+        for(User user: techs){
+            if(user.isActive() == true){
+                activeTechs.add(user);
+            }
+        }
+        
+        return activeTechs;
+        
     }
 
 }
