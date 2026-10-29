@@ -19,6 +19,12 @@ import lombok.*;
 @Builder
 @Getter
 @Setter
+
+/**
+ * The API accepts only the comment text from the client. The ticket ID comes
+ * from the URL, while the author ID and creation time are assigned server-side.
+ */
+
 public class Comment {
     private UUID commentId;
     private UUID ticketId;

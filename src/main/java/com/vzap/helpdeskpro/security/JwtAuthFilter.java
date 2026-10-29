@@ -12,6 +12,8 @@ import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.SecurityContext;
+import java.security.Principal;
 import jakarta.ws.rs.ext.Provider;
 import java.io.IOException;
 
@@ -48,6 +50,30 @@ public class JwtAuthFilter implements ContainerRequestFilter{
         try{
             String userId = jwtService.getUserId(token).toString();
             request.setProperty("userId", userId);
+            // Make the verified JWT subject available to REST resources as the authenticated principal.
+            SecurityContext originalContext = request.getSecurityContext();
+            request.setSecurityContext(new SecurityContext() {
+                @Override
+                public Principal getUserPrincipal() {
+                    return () -> userId;
+                }
+
+                @Override
+                public boolean isUserInRole(String role) {
+                    //load persisted roles before making role-based decisions.
+                    return false;
+                }
+
+                @Override
+                public boolean isSecure() {
+                    return originalContext != null && originalContext.isSecure();
+                }
+
+                @Override
+                public String getAuthenticationScheme() {
+                    return "Bearer";
+                }
+            });
         }catch(JwtException | IllegalArgumentException e){
             reject(request);
         }

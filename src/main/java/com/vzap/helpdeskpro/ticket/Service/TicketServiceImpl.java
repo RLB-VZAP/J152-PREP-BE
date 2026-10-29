@@ -12,10 +12,15 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+
+package com.vzap.helpdeskpro.ticket.Service;
+
+
 /**
  *
  * @author kbser
  */
+
 public class TicketServiceImpl implements TicketService 
 {
     private static final System.Logger LOG = System.getLogger(TicketRepoImpl.class.getName());
@@ -70,7 +75,5 @@ public class TicketServiceImpl implements TicketService
     {
         return ticketRepo.deleteTicket(tickets);
     }
-    
-    
     
 }
