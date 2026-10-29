@@ -24,6 +24,6 @@ public interface TicketRepo
     List<Tickets> findByPriority(Priority priority);
     List<Tickets> findByStatus(Status status);
     List<Tickets> findAll();
-    Optional<Tickets> updateUser(Tickets tickets);
-    Optional<Tickets> deleteUser(Tickets tickets);
+    Optional<Tickets> updateTicket(Tickets tickets);
+    Optional<Tickets> deleteTicket(Tickets tickets);
 }
