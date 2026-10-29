@@ -36,7 +36,7 @@ public class TicketRepoImpl implements TicketRepo
     @Override
     public Optional<Tickets> createTicket(Tickets tickets) 
     {
-        String query = "INSERT INTO ticket(ticketId, createdBy, assignedTo, title, description, category, priority, status, createdAt, resolvedAt) VALUES(?,?,?,?,?)";
+        String query = "INSERT INTO ticket(ticketId, createdBy, assignedTo, title, description, category, priority, status, createdAt, resolvedAt) VALUES(?,?,?,?,?,?,?,?,?,?)";
         try (Connection con = DBConfig.getCon(); PreparedStatement ps = con.prepareStatement(query)) 
         {
             ps.setString(1, tickets.getId().toString());
@@ -274,7 +274,7 @@ public class TicketRepoImpl implements TicketRepo
     }
 
     @Override
-    public Optional<Tickets> updateUser(Tickets tickets) 
+    public Optional<Tickets> updateTicket(Tickets tickets) 
     {
         String query = "UPDATE ticket SET ticketId = ?, createdBy = ?, assignedTo = ?, title = ?, description = ?, category = ?, priority = ?, status = ?, createdAt + ?, resolvedAt = ? WHERE ticketId = ?";
         try (Connection con = DBConfig.getCon(); PreparedStatement ps = con.prepareStatement(query)) 
@@ -302,7 +302,7 @@ public class TicketRepoImpl implements TicketRepo
     }
 
     @Override
-    public Optional<Tickets> deleteUser(Tickets tickets) 
+    public Optional<Tickets> deleteTicket(Tickets tickets) 
     {
         String query = "DELETE FROM ticket WHERE ticketId = ?";
         try (Connection con = DBConfig.getCon(); PreparedStatement ps = con.prepareStatement(query)) 

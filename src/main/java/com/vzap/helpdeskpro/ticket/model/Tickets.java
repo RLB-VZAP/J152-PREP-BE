@@ -9,6 +9,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 /**
  *
@@ -19,6 +20,7 @@ import lombok.Setter;
 @Builder
 @Getter
 @Setter
+@ToString
 public class Tickets 
 {
     private UUID id;

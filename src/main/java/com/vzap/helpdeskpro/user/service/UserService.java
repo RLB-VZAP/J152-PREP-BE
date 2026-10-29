@@ -5,8 +5,12 @@
 package com.vzap.helpdeskpro.user.service;
 
 import com.vzap.helpdeskpro.commons.ServiceResponse;
+import com.vzap.helpdeskpro.ticket.model.Tickets;
 import com.vzap.helpdeskpro.user.model.User;
 import java.util.List;
+import java.util.Optional;
+import java.util.TreeMap;
+import java.util.UUID;
 
 /**
  *
@@ -17,5 +21,15 @@ public interface UserService {
     ServiceResponse<User> register(User user);
     
     //list of active technicians
-    List<User>getActiveTechs();
+    TreeMap<Integer,User>getActiveTechs();
+    
+    //list of Open Tickets
+    TreeMap<Integer,Tickets>getOpenTickets();
+    
+    //assign ticket
+    void assignTicket(User tech, Tickets ticket);
+    
+    //get chosen ticket
+    
+    //get chosen tech
 }
