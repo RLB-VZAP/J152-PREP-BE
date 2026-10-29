@@ -51,5 +51,9 @@ public class UserServiceImpl implements UserService {
             return ServiceResponse.error(Response.Status.BAD_REQUEST, "Something went wrong during registration, please try again later");
         }
     }
-
+    
+    @Override
+    public Optional<User> findById(UUID userId) {
+        return userRepo.findById(userId);
+    }
 }
