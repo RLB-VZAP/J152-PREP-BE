@@ -102,13 +102,10 @@ public class CommentServiceImpl implements CommentService {
 
         Tickets ticket = accessResult.getValue();
         if (ticket.getStatus() == null) {
-            // Fail closed if the database does not provide a verifiable status.
-            return ServiceResponse.error(Response.Status.INTERNAL_SERVER_ERROR,
-                    "The ticket status could not be verified.");
+            return ServiceResponse.error(Response.Status.INTERNAL_SERVER_ERROR, "The ticket status could not be verified.");
         }
         if (ticket.getStatus() == Status.RESOLVED) {
-            return ServiceResponse.error(Response.Status.CONFLICT,
-                    "Resolved tickets cannot receive new comments.");
+            return ServiceResponse.error(Response.Status.CONFLICT, "Resolved tickets cannot receive new comments.");
         }
 
         Comment comment = Comment.builder()
@@ -120,15 +117,14 @@ public class CommentServiceImpl implements CommentService {
                 .build();
 
         Optional<Comment> saved;
+        
         try {
             saved = commentRepo.createComment(comment);
         } catch (PersistenceException e) {
-            return ServiceResponse.error(Response.Status.INTERNAL_SERVER_ERROR,
-                    "The comment could not be saved.", e);
+            return ServiceResponse.error(Response.Status.INTERNAL_SERVER_ERROR, "The comment could not be saved.", e);
         }
         if (saved.isEmpty()) {
-            return ServiceResponse.error(Response.Status.INTERNAL_SERVER_ERROR,
-                    "The comment could not be saved.");
+            return ServiceResponse.error(Response.Status.INTERNAL_SERVER_ERROR, "The comment couldn't be saved.");
         }
 
         return ServiceResponse.success(saved.get(), "Comment created successfully.");
@@ -138,8 +134,7 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public ServiceResponse<List<Comment>> getCommentsForTicket(UUID ticketId, UUID authenticatedUserId) {
         if (ticketId == null || authenticatedUserId == null) {
-            return ServiceResponse.error(Response.Status.BAD_REQUEST,
-                    "A valid ticket ID and authenticated user are required.");
+            return ServiceResponse.error(Response.Status.BAD_REQUEST, "A valid ticket ID and authenticated user required.");
         }
 
         ServiceResponse<Tickets> accessResult = findAccessibleTicket(ticketId, authenticatedUserId);
@@ -149,19 +144,12 @@ public class CommentServiceImpl implements CommentService {
 
         // CommentRepoImpl orders by createdAt ASC, then commentId ASC.
         try {
-            return ServiceResponse.success(commentRepo.findByTicketId(ticketId),
-                    "Comments retrieved successfully.");
+            return ServiceResponse.success(commentRepo.findByTicketId(ticketId), "Comments retrieved successfully.");
         } catch (PersistenceException e) {
-            return ServiceResponse.error(Response.Status.INTERNAL_SERVER_ERROR,
-                    "Comments could not be retrieved.", e);
+            return ServiceResponse.error(Response.Status.INTERNAL_SERVER_ERROR, "Comments could not be retrieved.", e);
         }
     }
 
-    /**
-     * Loads both records from persistence. Authorization is based on persisted
-     * user role and ticket creator; IDs and roles supplied in a request body are
-     * never trusted.
-     */
     private ServiceResponse<Tickets> findAccessibleTicket(UUID ticketId, UUID userId) {
         final Optional<Tickets> ticketResult;
         final Optional<User> userResult;
