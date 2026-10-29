@@ -1,0 +1,29 @@
+
+package com.vzap.helpdeskpro.ticket.repo;
+
+import com.vzap.helpdeskpro.ticket.model.Category;
+import com.vzap.helpdeskpro.ticket.model.Priority;
+import com.vzap.helpdeskpro.ticket.model.Status;
+import com.vzap.helpdeskpro.ticket.model.Tickets;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+/**
+ *
+ * @author kbser
+ */
+
+
+public interface TicketRepo 
+{
+    Optional<Tickets> createTicket(Tickets tickets);
+    Optional<Tickets> findById(UUID ticketId);
+    List<Tickets> findByCategory(Category category);
+    List<Tickets> findByPriority(Priority priority);
+    List<Tickets> findByStatus(Status status);
+    List<Tickets> findAll();
+    Optional<Tickets> updateUser(Tickets tickets);
+    Optional<Tickets> deleteUser(Tickets tickets);
+}
