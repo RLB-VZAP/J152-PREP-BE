@@ -13,9 +13,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 
-package com.vzap.helpdeskpro.ticket.Service;
-
-
 /**
  *
  * @author kbser
