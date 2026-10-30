@@ -205,7 +205,19 @@ public class UserRepoImpl implements UserRepo {
 
     @Override
     public Optional<User> deleteUser(User user) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
+       
+        if (user == null || user.getUserId() == null) {
+            return Optional.empty();
+        }
 
+        String sql = "DELETE FROM user WHERE userId = ?";
+        try (Connection con = DBConfig.getCon(); PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setString(1, user.getUserId().toString());
+            return ps.executeUpdate() > 0 ? Optional.of(user) : Optional.empty();
+        } catch (SQLException e) {
+            LOG.log(System.Logger.Level.ERROR, "Unable to delete user", e);
+            return Optional.empty();
+        }
+    }
 }
