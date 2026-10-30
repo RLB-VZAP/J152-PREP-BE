@@ -322,4 +322,47 @@ public class TicketRepoImpl implements TicketRepo
     }
     
     
+    // Method added to receive the tickets by the creator
+    public List<Tickets> findByCreator(String creator) 
+    {
+        List<Tickets> ticks = new ArrayList<>();
+        
+        String sql = "SELECT * FROM ticket WHERE createdBy = ? ORDER BY createdAt";
+
+        try (Connection con = DBConfig.getCon();
+             PreparedStatement ps = con.prepareStatement(sql)) 
+        {
+             ps.setString(1, creator);
+            try(ResultSet rs = ps.executeQuery())
+            {
+                while (rs.next()) 
+                {
+                    ticks.add( 
+                            Tickets.builder()
+                                    .created_by(rs.getString("createdBy"))
+                                    .assigned_to(rs.getString("assignedTo"))
+                                    .title(rs.getString("title"))
+                                    .description(rs.getString("description"))
+                                    .category(Category.valueOf(rs.getString("category")))
+                                    .priority(Priority.valueOf(rs.getString("priority")))
+                                    .status(Status.valueOf(rs.getString("status")))
+                                    .created_at(rs.getTimestamp("createdAt"))
+                                    .resolved_at(rs.getTimestamp("resolvedAt"))
+                                    .build()         
+                   );
+                }
+            }
+            catch (SQLException e) 
+            {
+                e.printStackTrace();
+            }
+
+        } 
+         catch (SQLException e) 
+        {
+            LOG.log(System.Logger.Level.ERROR, e);
+        }
+
+        return ticks;
+    }
 }

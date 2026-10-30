@@ -9,9 +9,11 @@ import com.vzap.helpdeskpro.user.service.UserService;
 import com.vzap.helpdeskpro.commons.ServiceResponse;
 import com.vzap.helpdeskpro.security.JwtService;
 import com.vzap.helpdeskpro.security.Secured;
+import com.vzap.helpdeskpro.ticket.repo.TicketRepoImpl;
 import com.vzap.helpdeskpro.user.model.Role;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.QueryParam;
@@ -34,6 +36,8 @@ public class UserResource {
     private UserService userService;
     @Inject
     private JwtService jwtService;
+    @Inject
+    private TicketRepoImpl repo;
 
     @POST
     @Path("/login")
@@ -72,4 +76,23 @@ public class UserResource {
             }
         };
     }
+    
+    @GET
+    @Path("tickets")
+    public Response tickets(User user) {
+
+    if (user.getRole() == Role.TECHNICIAN) {
+        return Response.ok(repo.findAll()).build();
+    }
+
+    if (user.getRole() == Role.CLIENT) {
+
+        return Response.ok(
+            repo.findByCreator(user.getFullName())).build();
+    }
+
+    return Response.status(Response.Status.FORBIDDEN)
+            .entity("You are not authorized to view tickets")
+            .build();
+}
 }
