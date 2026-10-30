@@ -74,7 +74,7 @@ public class TicketRepoImpl implements TicketRepo
                 if (rs.next()) {
                     return Optional.of(
                             Tickets.builder()
-                                    .id((UUID)rs.getObject("ticketId"))
+                                    .id(UUID.fromString(rs.getString("ticketId")))
                                     .created_by(rs.getString("createdBy"))
                                     .assigned_to(rs.getString("assignedTo"))
                                     .title(rs.getString("title"))
@@ -114,7 +114,7 @@ public class TicketRepoImpl implements TicketRepo
                 {
                     categories.add( 
                             Tickets.builder()
-                                    .id((UUID)rs.getObject("ticketId"))
+                                    .id(UUID.fromString(rs.getString("ticketId")))
                                     .created_by(rs.getString("createdBy"))
                                     .assigned_to(rs.getString("assignedTo"))
                                     .title(rs.getString("title"))
@@ -160,7 +160,7 @@ public class TicketRepoImpl implements TicketRepo
                 {
                     priorities.add( 
                             Tickets.builder()
-                                    .id((UUID)rs.getObject("ticketId"))
+                                    .id(UUID.fromString(rs.getString("ticketId")))
                                     .created_by(rs.getString("createdBy"))
                                     .assigned_to(rs.getString("assignedTo"))
                                     .title(rs.getString("title"))
@@ -206,7 +206,7 @@ public class TicketRepoImpl implements TicketRepo
                 {
                     statuses.add( 
                             Tickets.builder()
-                                    .id((UUID)rs.getObject("ticketId"))
+                                    .id(UUID.fromString(rs.getString("ticketId")))
                                     .created_by(rs.getString("createdBy"))
                                     .assigned_to(rs.getString("assignedTo"))
                                     .title(rs.getString("title"))
@@ -250,7 +250,7 @@ public class TicketRepoImpl implements TicketRepo
                 {
                     ticks.add( 
                             Tickets.builder()
-                                    .id((UUID)rs.getObject("ticketId"))
+                                    .id(UUID.fromString(rs.getString("ticketId")))
                                     .created_by(rs.getString("createdBy"))
                                     .assigned_to(rs.getString("assignedTo"))
                                     .title(rs.getString("title"))
