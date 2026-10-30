@@ -101,7 +101,14 @@ public class UserRepoImpl implements UserRepo {
 
     @Override
     public Optional<User> findByEmailAndPassword(User user) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+         if (user == null 
+                 || isBlank(user.getEmail()) 
+                 || isBlank(user.getPasswordHash())) {
+            return Optional.empty();
+        }
+        
+        return findOne("SELECT * FROM user WHERE email = ? AND passwordHash = ?",
+                user.getEmail(), user.getPasswordHash());
     }
 
     @Override
@@ -134,18 +141,67 @@ public class UserRepoImpl implements UserRepo {
 
     @Override
     public List<User> findByRole(Role role) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        
+      List<User> users = new ArrayList<>();
+        if (role == null) {
+            return users;
+        }
+
+        String sql = "SELECT * FROM user WHERE role = ? ORDER BY fullName ASC, userId ASC";
+        try (Connection con = DBConfig.getCon(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, role.name());
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    users.add(mapUser(rs));
+                }
+            }
+            
+        } catch (SQLException | IllegalArgumentException e) {
+            LOG.log(System.Logger.Level.ERROR, "Unable to retrieve users by role", e);
+        }
+        return users;
     }
 
     @Override
     public List<User> findAll() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        List<User> users = new ArrayList<>();
+        String sql = "SELECT * FROM user ORDER BY fullName ASC, userId ASC";
+        try (Connection con = DBConfig.getCon();PreparedStatement ps = con.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                users.add(mapUser(rs));
+            }
+        } catch (SQLException | IllegalArgumentException e) {
+            LOG.log(System.Logger.Level.ERROR, "Unable to retrieve users", e);
+        }
+        return users;
     }
 
     @Override
     public Optional<User> updateUser(User user) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        if (user == null || user.getUserId() == null 
+                || isBlank(user.getEmail())
+                || isBlank(user.getPasswordHash()) 
+                || isBlank(user.getFullName()) 
+                || user.getRole() == null) {
+            return Optional.empty();
+        }
+
+        String sql = "UPDATE user SET email = ?, passwordHash = ?, fullName = ?, role = ?, active = ? WHERE userId = ?";
+        try (Connection con = DBConfig.getCon();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, user.getEmail());
+            ps.setString(2, user.getPasswordHash());
+            ps.setString(3, user.getFullName());
+            ps.setString(4, user.getRole().name());
+            ps.setBoolean(5, user.isActive());
+            ps.setString(6, user.getUserId().toString());
+            return ps.executeUpdate() > 0 ? Optional.of(user) : Optional.empty();
+        } catch (SQLException e) {
+            LOG.log(System.Logger.Level.ERROR, "Unable to update user", e);
+            return Optional.empty();
+        }
     }
+
 
     @Override
     public Optional<User> deleteUser(User user) {
