@@ -11,9 +11,19 @@ package com.vzap.helpdeskpro.comment.service;
 import com.vzap.helpdeskpro.comment.model.Comment;
 import com.vzap.helpdeskpro.comment.repo.CommentRepo;
 import com.vzap.helpdeskpro.commons.ServiceResponse;
+
+import com.vzap.helpdeskpro.ticket.Service.TicketService;
+import com.vzap.helpdeskpro.ticket.model.Status;
+import com.vzap.helpdeskpro.ticket.model.Tickets;
+import com.vzap.helpdeskpro.user.model.Role;
+import com.vzap.helpdeskpro.user.model.User;
+import com.vzap.helpdeskpro.user.service.UserService;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.PersistenceException;
 import jakarta.ws.rs.core.Response;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,9 +38,17 @@ public class CommentServiceImpl implements CommentService {
     @Inject
     private CommentRepo commentRepo;
 
+    @Inject
+    private TicketService ticketService;
+
+    @Inject
+    private UserService userService;
     
     @Override
     public Optional<Comment> createComment(Comment comment) {
+        if (!isValidComment(comment, false)) {
+            return Optional.empty();
+        }
         return commentRepo.createComment(comment);
     }
 
@@ -51,6 +69,9 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public Optional<Comment> updateComment(Comment comment) {
+        if (!isValidComment(comment, true)) {
+            return Optional.empty();
+        }
         return commentRepo.updateComment(comment);
     }
 
@@ -72,47 +93,103 @@ public class CommentServiceImpl implements CommentService {
             return ServiceResponse.error(Response.Status.BAD_REQUEST, "Comment text cannot exceed 1000 characters.");
         }
 
-        /*
-         * TODO HD-16 — Ticket status validation (currently unavailable on dev):
-         * Once Karabo's Ticket model/repository/service is merged, 
-         * TODO HD-16 — Ticket access authorization (currently unavailable on dev):
-         * 
-         */
-        
-        return ServiceResponse.error(Response.Status.SERVICE_UNAVAILABLE, "Comment creation is unavailable waiting on HD-03 karabo ticket");
+        String normalizedContent = content.trim();
 
-        /* Example integration once the Ticket service is available:
-        if (!canUserAccessTicket(ticketId, authenticatedAuthorId)) {
-            return ServiceResponse.error(Response.Status.FORBIDDEN, "You cannot access this ticket.");
+        ServiceResponse<Tickets> accessResult = findAccessibleTicket(ticketId, authenticatedAuthorId);
+        if (accessResult.getStatus() != Response.Status.OK) {
+            return ServiceResponse.error(accessResult.getStatus(), accessResult.getMessage(), accessResult.getE());
         }
-        if (!canCommentOnTicket(ticketId)) {
-            return ServiceResponse.error(Response.Status.CONFLICT, "Resolved tickets cannot receive comments.");
+
+        Tickets ticket = accessResult.getValue();
+        if (ticket.getStatus() == null) {
+            return ServiceResponse.error(Response.Status.INTERNAL_SERVER_ERROR, "The ticket status could not be verified.");
         }
-        ....
-    
-        */
+        if (ticket.getStatus() == Status.RESOLVED) {
+            return ServiceResponse.error(Response.Status.CONFLICT, "Resolved tickets cannot receive new comments.");
+        }
+
+        Comment comment = Comment.builder()
+                .commentId(UUID.randomUUID())
+                .ticketId(ticketId)
+                .authorId(authenticatedAuthorId)
+                .content(normalizedContent)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        Optional<Comment> saved;
+        
+        try {
+            saved = commentRepo.createComment(comment);
+        } catch (PersistenceException e) {
+            return ServiceResponse.error(Response.Status.INTERNAL_SERVER_ERROR, "The comment could not be saved.", e);
+        }
+        if (saved.isEmpty()) {
+            return ServiceResponse.error(Response.Status.INTERNAL_SERVER_ERROR, "The comment couldn't be saved.");
+        }
+
+        return ServiceResponse.success(saved.get(), "Comment created successfully.");
     }
+
 
     @Override
     public ServiceResponse<List<Comment>> getCommentsForTicket(UUID ticketId, UUID authenticatedUserId) {
-        
         if (ticketId == null || authenticatedUserId == null) {
             return ServiceResponse.error(Response.Status.BAD_REQUEST, "A valid ticket ID and authenticated user required.");
         }
 
-        /*
-         * TODO HD-16 — Before returning comments, 
-         * Return 404 for an unknown ticket and 403 when access is denied. Do not
-         * expose comments if ticket access cannot be verified.
-         */
-        return ServiceResponse.error(Response.Status.SERVICE_UNAVAILABLE,"Comment retrieval is is unavailable waiting on HD-03 karabo ticket");
-
-        /* Example integration once the Ticket service is available:
-        if (!canUserAccessTicket(ticketId, authenticatedUserId)) {
-            return ServiceResponse.error(Response.Status.FORBIDDEN, "You cannot access this ticket.");
+        ServiceResponse<Tickets> accessResult = findAccessibleTicket(ticketId, authenticatedUserId);
+        if (accessResult.getStatus() != Response.Status.OK) {
+            return ServiceResponse.error(accessResult.getStatus(), accessResult.getMessage(), accessResult.getE());
         }
-        return ServiceResponse.success(commentRepo.findByTicketId(ticketId), "Comments retrieved.");
-        */
+
+        // CommentRepoImpl orders by createdAt ASC, then commentId ASC.
+        try {
+            return ServiceResponse.success(commentRepo.findByTicketId(ticketId), "Comments retrieved successfully.");
+        } catch (PersistenceException e) {
+            return ServiceResponse.error(Response.Status.INTERNAL_SERVER_ERROR, "Comments could not be retrieved.", e);
+        }
+    }
+
+    private ServiceResponse<Tickets> findAccessibleTicket(UUID ticketId, UUID userId) {
+        final Optional<Tickets> ticketResult;
+        final Optional<User> userResult;
+        try {
+            userResult = userService.findById(userId); //waiting on user repo or service
+            if (userResult.isEmpty() || !userResult.get().isActive()) {
+                return ServiceResponse.error(Response.Status.UNAUTHORIZED, "The authenticated account could not be verified.");
+            }
+            ticketResult = ticketService.findById(ticketId);
+            if (ticketResult.isEmpty()) {
+                return ServiceResponse.error(Response.Status.NOT_FOUND, "Ticket not found.");
+            }
+        } catch (PersistenceException e) {
+            return ServiceResponse.error(Response.Status.INTERNAL_SERVER_ERROR, "Ticket access not verified.", e);
+        }
+
+        Tickets ticket = ticketResult.get();
+        User user = userResult.get();
+
+        if (user.getRole() == Role.TECHNICIAN) {
+            return ServiceResponse.success(ticket, "access permitted.");
+        }
+
+        if (user.getRole() == Role.CLIENT && ticket.getCreated_by() != null && ticket.getCreated_by().equals(userId.toString())) {
+            return ServiceResponse.success(ticket, "access permitted.");
+        }
+
+        return ServiceResponse.error(Response.Status.FORBIDDEN,"You do not have permission to access this ticket.");
+    }
+
+    private boolean isValidComment(Comment comment, boolean requireExistingFields) {
+        if (comment == null
+                || comment.getTicketId() == null
+                || comment.getAuthorId() == null
+                || comment.getContent() == null
+                || comment.getContent().isBlank()
+                || comment.getContent().length() > MAX_COMMENT_LENGTH) {
+            return false;
+        }
+        return !requireExistingFields
+                || (comment.getCommentId() != null && comment.getCreatedAt() != null);
     }
 }
-

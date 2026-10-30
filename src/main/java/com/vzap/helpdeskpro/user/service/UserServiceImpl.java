@@ -115,4 +115,7 @@ public class UserServiceImpl implements UserService {
           ticketRepo.updateTicket(ticket);
           
       }
+    public Optional<User> findById(UUID userId) {
+        return userRepo.findById(userId);
+    }
 }

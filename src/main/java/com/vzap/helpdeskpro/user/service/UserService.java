@@ -10,6 +10,7 @@ import com.vzap.helpdeskpro.user.model.User;
 import java.util.List;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -34,4 +35,5 @@ public interface UserService {
     
     //get chosen tech
     Optional<User>chosenTechnician(int choice);
+    Optional<User> findById(UUID userId);
 }
