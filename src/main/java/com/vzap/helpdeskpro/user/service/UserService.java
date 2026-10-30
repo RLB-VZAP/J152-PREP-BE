@@ -30,6 +30,8 @@ public interface UserService {
     void assignTicket(User tech, Tickets ticket);
     
     //get chosen ticket
+    Optional<Tickets>chosenTicket(int choice);
     
     //get chosen tech
+    Optional<User>chosenTechnician(int choice);
 }

@@ -99,6 +99,17 @@ public class UserServiceImpl implements UserService {
      }
      
      @Override
+    public Optional<Tickets>chosenTicket(int choice){
+        return Optional.of(getOpenTickets().get(Integer.valueOf(choice)));
+    }
+    
+    @Override
+    public Optional<User>chosenTechnician(int choice){
+        return Optional.of(getActiveTechs().get(Integer.valueOf(choice)));
+        
+    }
+     
+     @Override
       public void assignTicket(User tech, Tickets ticket){
           ticket.setAssigned_to(tech.getUserId().toString());
           ticketRepo.updateTicket(ticket);
