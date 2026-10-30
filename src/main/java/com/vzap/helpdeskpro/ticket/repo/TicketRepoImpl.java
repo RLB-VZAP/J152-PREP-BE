@@ -36,7 +36,7 @@ public class TicketRepoImpl implements TicketRepo
     @Override
     public Optional<Tickets> createTicket(Tickets tickets) 
     {
-        String query = "INSERT INTO ticket(ticketId, createdBy, assignedTo, title, description, category, priority, status, createdAt, resolvedAt) VALUES(?,?,?,?,?)";
+        String query = "INSERT INTO ticket(ticketId, createdBy, assignedTo, title, description, category, priority, status, createdAt, resolvedAt) VALUES(?,?,?,?,?,?,?,?,?,?)";
         try (Connection con = DBConfig.getCon(); PreparedStatement ps = con.prepareStatement(query)) 
         {
             ps.setString(1, tickets.getId().toString());
