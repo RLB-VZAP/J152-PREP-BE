@@ -8,11 +8,12 @@ import com.vzap.helpdeskpro.config.DBConfig;
 import com.vzap.helpdeskpro.user.model.Role;
 import com.vzap.helpdeskpro.user.model.User;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Singleton;
+import jakarta.persistence.PersistenceException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -25,9 +26,53 @@ import java.util.UUID;
 public class UserRepoImpl implements UserRepo {
 
     private static final System.Logger LOG = System.getLogger(UserRepoImpl.class.getName());
+    
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
+    
+    private Optional<User> findOne(String sql, String... values) {
+        try (Connection con = DBConfig.getCon(); PreparedStatement ps = con.prepareStatement(sql)) {
+            for (int i = 0; i < values.length; i++) {
+                ps.setString(i + 1, values[i]);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()){
+                    return Optional.of(mapUser(rs));
+                }
+                return Optional.empty();
+       
+            }
+        } catch (SQLException | IllegalArgumentException e) {
+            LOG.log(System.Logger.Level.ERROR, "Unable to retrieve user", e);
+            throw new PersistenceException("Unable to retrieve user.", e);
+        }
+    }
+
+    private User mapUser(ResultSet rs) throws SQLException {
+        return User.builder()
+                .userId(UUID.fromString(rs.getString("userId")))
+                .email(rs.getString("email"))
+                .passwordHash(rs.getString("passwordHash"))
+                .fullName(rs.getString("fullName"))
+                .role(Role.valueOf(rs.getString("role")))
+                .active(rs.getBoolean("active"))
+                .build();
+    }
 
     @Override
     public Optional<User> createUser(User user) {
+        
+        if (user == null 
+                || user.getUserId() == null 
+                || isBlank(user.getEmail())
+                || isBlank(user.getPasswordHash()) 
+                || isBlank(user.getFullName()) 
+                || user.getRole() == null) {
+            return Optional.empty();
+        }
+        
+        user.setActive(true);
         String query = "INSERT INTO USER(userId, email, passwordHash, fullName, role) VALUES(?,?,?,?,?)";
         try (Connection con = DBConfig.getCon(); PreparedStatement ps = con.prepareStatement(query)) {
             ps.setString(1, user.getUserId().toString());
@@ -48,7 +93,10 @@ public class UserRepoImpl implements UserRepo {
 
     @Override
     public Optional<User> findById(UUID userId) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        if (userId == null) {
+            return Optional.empty();
+        }
+        return findOne("SELECT * FROM user WHERE userId = ?", userId.toString());
     }
 
     @Override
