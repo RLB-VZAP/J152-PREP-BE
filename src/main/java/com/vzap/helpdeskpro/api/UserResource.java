@@ -8,17 +8,18 @@ import com.vzap.helpdeskpro.user.model.User;
 import com.vzap.helpdeskpro.user.service.UserService;
 import com.vzap.helpdeskpro.commons.ServiceResponse;
 import com.vzap.helpdeskpro.security.JwtService;
-import com.vzap.helpdeskpro.security.Secured;
 import com.vzap.helpdeskpro.user.model.Role;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import static jakarta.ws.rs.core.Response.Status;
+import java.util.List;
 
 /**
  *
@@ -71,5 +72,29 @@ public class UserResource {
                 yield Response.status(Status.EXPECTATION_FAILED).entity("Unable to process this request at the moment").build();
             }
         };
+    }
+    
+    @GET
+    @Path("/technicians")
+     public Response TechnicianList(@QueryParam("role")String role){
+        
+        ServiceResponse result = this.userService.getActiveTechs();
+         if(Role.valueOf(role) == Role.TECHNICIAN){
+            return switch(result.getStatus()){
+           
+                case OK -> {
+                
+                    yield Response.ok(result.getValue()).build();
+                }  
+                case BAD_REQUEST, UNAUTHORIZED -> {
+                    yield Response.status(result.getStatus()).entity(result.getMessage()).build();
+                }
+                default -> {
+                     yield Response.status(Status.EXPECTATION_FAILED).entity("Unable to process this request at the moment").build();
+                }   
+            };
+     }
+         return Response.status(Status.EXPECTATION_FAILED).entity("Unable to process this request at the moment").build();
+        
     }
 }

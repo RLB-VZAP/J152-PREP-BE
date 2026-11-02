@@ -65,52 +65,57 @@ public class UserServiceImpl implements UserService {
     }
     
     @Override
-    public TreeMap<Integer,User>getActiveTechs(){
+    public ServiceResponse<List<User>>getActiveTechs(){
+        
+
+               List<User> techs = userRepo.findByRole(Role.TECHNICIAN);
+                Optional<List<User>> activeTechs = Optional.of(new ArrayList<>());
+        
+                for(User user: techs){
+                    if(user.isActive() == true){
+                    activeTechs.get().add(user);
+                    }
+                     
+                }
+                 try{   
+                  return ServiceResponse.success(activeTechs.orElseThrow(), "Found list");
+                 }catch(Exception e){
+                     return ServiceResponse.error(Response.Status.BAD_REQUEST, "Problem in returning a list of technicians");
+                 }
+    }
+    
+    @Override
+     public ServiceResponse<List<Tickets>>getOpenTickets(){
         userRepo = new UserRepoImpl();
-        List<User>techs = userRepo.findByRole(Role.TECHNICIAN);
-        TreeMap<Integer,User> activeTechs = new TreeMap<>();
-        int index = 1;
+               List<Tickets> tickets = ticketRepo.findByStatus(Status.OPEN);
+                Optional<List<Tickets>> openTickets = Optional.of(new ArrayList<>());
         
-        for(User user: techs){
-            if(user.isActive() == true){
-                activeTechs.putIfAbsent(index,user);
-                ++index;
-            }
-        }
-        
-        return activeTechs;
-        
-    }
-    
-    @Override
-     public TreeMap<Integer,Tickets>getOpenTickets(){
-         ticketRepo = new TicketRepoImpl();
-         
-         List<Tickets>tickets = ticketRepo.findAll();
-         
-         TreeMap<Integer,Tickets>openTickets = new TreeMap<>();
-         
-         for(int index = 0; index<tickets.size(); index++){
-             if(tickets.get(index).getStatus() == Status.OPEN)
-                 openTickets.putIfAbsent((index+1), tickets.get(index));
-         }
-        
-         return openTickets;
+                for(Tickets ticket: tickets){
+                    openTickets.get().add(ticket);
+                     
+                }
+                 try{   
+                  return ServiceResponse.success(openTickets.orElseThrow(), "Found Tickets");
+                 }catch(Exception e){
+                     return ServiceResponse.error(Response.Status.BAD_REQUEST, "Problem in returning a list of open tickets");
+                     
+                 }
      }
+                
      
      @Override
-    public Optional<Tickets>chosenTicket(int choice){
-        return Optional.of(getOpenTickets().get(Integer.valueOf(choice)));
+    public Optional<Tickets>chosenTicket(int choice){ 
+        return Optional.of(getOpenTickets().getValue().get((choice+1)));
     }
     
     @Override
-    public Optional<User>chosenTechnician(int choice){
-        return Optional.of(getActiveTechs().get(Integer.valueOf(choice)));
+    public Optional<User>chosenTechnician(int choice){ 
+        return Optional.of(getActiveTechs().getValue().get((choice+1)));
         
     }
      
      @Override
-      public void assignTicket(User tech, Tickets ticket){
+      public void assignTicket(User tech, Tickets ticket){ 
           ticket.setAssigned_to(tech.getUserId().toString());
           ticketRepo.updateTicket(ticket);
           
