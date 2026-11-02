@@ -75,7 +75,7 @@ public class UserResource {
     }
     
     @GET
-    @Path("/technicians")
+    @Path("/activeTechnicians")
      public Response TechnicianList(@QueryParam("role")String role){
         
         ServiceResponse result = this.userService.getActiveTechs();
@@ -86,7 +86,7 @@ public class UserResource {
                 
                     yield Response.ok(result.getValue()).build();
                 }  
-                case BAD_REQUEST, UNAUTHORIZED -> {
+                case BAD_REQUEST -> {
                     yield Response.status(result.getStatus()).entity(result.getMessage()).build();
                 }
                 default -> {
@@ -97,4 +97,24 @@ public class UserResource {
          return Response.status(Status.EXPECTATION_FAILED).entity("Unable to process this request at the moment").build();
         
     }
+     @GET
+     @Path("/openTickets")
+     public Response getOpenTickets(@QueryParam("role") String role){
+         ServiceResponse result = this.userService.getOpenTickets();
+         
+         if(Role.valueOf(role) == Role.TECHNICIAN){
+            return switch(result.getStatus()){
+                case OK ->{
+                    yield Response.ok(result.getValue()).build();
+                }
+                case BAD_REQUEST ->{
+                    yield Response.status(result.getStatus()).entity(result.getMessage()).build();
+                }
+                default -> {
+                    yield Response.status(Status.EXPECTATION_FAILED).entity("Unable to process thid request at the moment").build();
+                }
+            };
+         }
+         return Response.status(Status.EXPECTATION_FAILED).entity("Unable to process this request at the moment").build();
+     }
 }
