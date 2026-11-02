@@ -10,6 +10,7 @@ import com.vzap.helpdeskpro.commons.ServiceResponse;
 import com.vzap.helpdeskpro.security.JwtService;
 import com.vzap.helpdeskpro.security.Secured;
 import com.vzap.helpdeskpro.user.model.Role;
+import com.vzap.helpdeskpro.ticket.model.Tickets;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
@@ -18,7 +19,11 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import java.util.Optional;
 import static jakarta.ws.rs.core.Response.Status;
+import com.vzap.helpdeskpro.ticket.repo.TicketRepoImpl;
+import com.vzap.helpdeskpro.ticket.Service.TicketServiceImpl;
+import java.util.HashSet;
 
 /**
  *
@@ -53,6 +58,27 @@ public class UserResource {
                     .build();
         }
     }
+  
+    
+   
+   
+   @POST
+   @Path("/tickets")
+   public Response createTicket(Tickets ticket){
+       
+       TicketServiceImpl tsi = new TicketServiceImpl();
+       
+       Optional<Tickets> result = tsi.createTicket(ticket);
+      
+       if(result.isEmpty()){
+          return Response.status(Status.BAD_REQUEST)
+                  .build();   
+       }
+
+    return Response.status(Status.CREATED)
+            .build();
+}
+   
 
     @POST
     @Path("register")
