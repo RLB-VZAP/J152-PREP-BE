@@ -21,6 +21,8 @@ import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import static jakarta.ws.rs.core.Response.Status;
+import java.util.UUID;
+import java.util.Optional;
 
 /**
  *
@@ -78,21 +80,24 @@ public class UserResource {
     }
     
     @GET
-    @Path("tickets")
-    public Response tickets(User user) {
+    @Path("/tickets")
+    @Secured
+    public Response tickets(@QueryParam("userId") String userId) {
 
-    if (user.getRole() == Role.TECHNICIAN) {
-        return Response.ok(repo.findAll()).build();
+        Optional<User> user = userService.findById(UUID.fromString(userId));
+        
+        if (user.get().getRole() == Role.TECHNICIAN) {
+            return Response.ok(repo.findAll()).build();
+        }
+
+        if (user.get().getRole() == Role.CLIENT) {
+
+            return Response.ok(
+                repo.findByCreator(user.get().getFullName())).build();
+        }
+
+        return Response.status(Response.Status.FORBIDDEN)
+                .entity("You are not authorized to view tickets")
+                .build();
     }
-
-    if (user.getRole() == Role.CLIENT) {
-
-        return Response.ok(
-            repo.findByCreator(user.getFullName())).build();
-    }
-
-    return Response.status(Response.Status.FORBIDDEN)
-            .entity("You are not authorized to view tickets")
-            .build();
-}
 }
