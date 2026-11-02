@@ -7,7 +7,15 @@ import com.vzap.helpdeskpro.ticket.model.Status;
 import com.vzap.helpdeskpro.ticket.model.Tickets;
 import com.vzap.helpdeskpro.ticket.repo.TicketRepo;
 import com.vzap.helpdeskpro.ticket.repo.TicketRepoImpl;
+import com.vzap.helpdeskpro.user.model.User;
+import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.ws.rs.ClientErrorException;
+import jakarta.ws.rs.ForbiddenException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Response;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,7 +25,7 @@ import java.util.UUID;
  *
  * @author kbser
  */
-
+@Stateless
 public class TicketServiceImpl implements TicketService 
 {
     private static final System.Logger LOG = System.getLogger(TicketRepoImpl.class.getName());
@@ -73,4 +81,15 @@ public class TicketServiceImpl implements TicketService
         return ticketRepo.deleteTicket(tickets);
     }
     
+    @PersistenceContext
+    private EntityManager em;
+    
+    public Tickets updateStatus(UUID ticketId, Status target, User actor){
+        Tickets ticket = em.find(Tickets.class, ticketId);
+        if (ticket == null) throw new NotFoundException();
+        if (!ticket.getStatus().canTransitionTo(target)) throw new ClientErrorException(Response.Status.CONFLICT);
+        if (ticket.getAssigned_to() == null) throw new ClientErrorException("Ticket has no assignee", Response.Status.CONFLICT);
+        if (!ticket.getAssigned_to().equals(actor.getUserId())) throw new ForbiddenException();
+        return ticket;
+    }
 }
