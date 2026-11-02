@@ -33,7 +33,6 @@ import java.util.UUID;
 public class CommentServiceImpl implements CommentService {
 
     private static final int MAX_COMMENT_LENGTH = 1000;
-    private static final System.Logger LOG = System.getLogger(CommentServiceImpl.class.getName());
 
     @Inject
     private CommentRepo commentRepo;
@@ -43,6 +42,7 @@ public class CommentServiceImpl implements CommentService {
 
     @Inject
     private UserService userService;
+
     
     @Override
     public Optional<Comment> createComment(Comment comment) {
@@ -51,22 +51,27 @@ public class CommentServiceImpl implements CommentService {
         }
         return commentRepo.createComment(comment);
     }
-
+    
+    
     @Override
     public Optional<Comment> findById(UUID commentId) {
         return commentRepo.findById(commentId);
     }
 
+    
+    
     @Override
     public List<Comment> findByTicketId(UUID ticketId) {
         return commentRepo.findByTicketId(ticketId);
     }
 
+    
     @Override
     public List<Comment> findAll() {
         return commentRepo.findAll();
     }
 
+    
     @Override
     public Optional<Comment> updateComment(Comment comment) {
         if (!isValidComment(comment, true)) {
@@ -81,31 +86,34 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public ServiceResponse<Comment> addComment(UUID ticketId, UUID authenticatedAuthorId, String content) {
-        
+    public ServiceResponse<Comment> addComment(UUID ticketId,UUID authenticatedAuthorId,String content) {
+
         if (ticketId == null || authenticatedAuthorId == null) {
-            return ServiceResponse.error(Response.Status.BAD_REQUEST,"A valid ticket ID & authenticated user required");
+            return ServiceResponse.error(Response.Status.BAD_REQUEST,"A valid ticket ID & User required.");
         }
-        if (content == null || content.isBlank()) {
-            return ServiceResponse.error(Response.Status.BAD_REQUEST, "Comment text is required");
-        }
-        if (content.length() > MAX_COMMENT_LENGTH) {
-            return ServiceResponse.error(Response.Status.BAD_REQUEST, "Comment text cannot exceed 1000 characters.");
+
+        if (!isValidContent(content)) {return ServiceResponse.error(Response.Status.BAD_REQUEST,"Comment text must contain between 1 and 1000 characters.");
         }
 
         String normalizedContent = content.trim();
 
         ServiceResponse<Tickets> accessResult = findAccessibleTicket(ticketId, authenticatedAuthorId);
+
         if (accessResult.getStatus() != Response.Status.OK) {
-            return ServiceResponse.error(accessResult.getStatus(), accessResult.getMessage(), accessResult.getE());
+            return ServiceResponse.error(accessResult.getStatus(),accessResult.getMessage(),accessResult.getE());
         }
 
         Tickets ticket = accessResult.getValue();
+
         if (ticket.getStatus() == null) {
-            return ServiceResponse.error(Response.Status.INTERNAL_SERVER_ERROR, "The ticket status could not be verified.");
+            return ServiceResponse.error(
+                    Response.Status.INTERNAL_SERVER_ERROR,
+                    "The ticket status not verified."
+            );
         }
+
         if (ticket.getStatus() == Status.RESOLVED) {
-            return ServiceResponse.error(Response.Status.CONFLICT, "Resolved tickets cannot receive new comments.");
+            return ServiceResponse.error(Response.Status.CONFLICT,"Resolved tickets cannot receive new comments.");
         }
 
         Comment comment = Comment.builder()
@@ -116,80 +124,317 @@ public class CommentServiceImpl implements CommentService {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        Optional<Comment> saved;
-        
         try {
-            saved = commentRepo.createComment(comment);
-        } catch (PersistenceException e) {
-            return ServiceResponse.error(Response.Status.INTERNAL_SERVER_ERROR, "The comment could not be saved.", e);
-        }
-        if (saved.isEmpty()) {
-            return ServiceResponse.error(Response.Status.INTERNAL_SERVER_ERROR, "The comment couldn't be saved.");
-        }
+            Optional<Comment> saved = commentRepo.createComment(comment);
 
-        return ServiceResponse.success(saved.get(), "Comment created successfully.");
+            if (saved.isEmpty()) {
+                return ServiceResponse.error(Response.Status.INTERNAL_SERVER_ERROR,"The comment could not be saved.");
+            }
+
+            return ServiceResponse.success(
+                    saved.get(),"Comment created successfully.");
+
+        } catch (PersistenceException e) {
+            return ServiceResponse.error(Response.Status.INTERNAL_SERVER_ERROR,"The comment could not be saved.", e);
+        }
     }
 
-
     @Override
-    public ServiceResponse<List<Comment>> getCommentsForTicket(UUID ticketId, UUID authenticatedUserId) {
+    public ServiceResponse<List<Comment>> getCommentsForTicket(
+            UUID ticketId,
+            UUID authenticatedUserId) {
+
         if (ticketId == null || authenticatedUserId == null) {
-            return ServiceResponse.error(Response.Status.BAD_REQUEST, "A valid ticket ID and authenticated user required.");
+            return ServiceResponse.error(
+                    Response.Status.BAD_REQUEST,
+                    "A valid ticket ID and authenticated user are required."
+            );
         }
 
         ServiceResponse<Tickets> accessResult = findAccessibleTicket(ticketId, authenticatedUserId);
+
         if (accessResult.getStatus() != Response.Status.OK) {
-            return ServiceResponse.error(accessResult.getStatus(), accessResult.getMessage(), accessResult.getE());
+            return ServiceResponse.error(
+                    accessResult.getStatus(),
+                    accessResult.getMessage(),
+                    accessResult.getE()
+            );
         }
 
-        // CommentRepoImpl orders by createdAt ASC, then commentId ASC.
         try {
-            return ServiceResponse.success(commentRepo.findByTicketId(ticketId), "Comments retrieved successfully.");
+            
+            return ServiceResponse.success(commentRepo.findByTicketId(ticketId),"Comments retrieved successfully.");
+
         } catch (PersistenceException e) {
-            return ServiceResponse.error(Response.Status.INTERNAL_SERVER_ERROR, "Comments could not be retrieved.", e);
+            return ServiceResponse.error(Response.Status.INTERNAL_SERVER_ERROR,"Comments could not be retrieved.",e);
         }
     }
 
-    private ServiceResponse<Tickets> findAccessibleTicket(UUID ticketId, UUID userId) {
+    // Update an existing comment.
+    @Override
+    public ServiceResponse<Comment> updateComment(UUID ticketId, UUID commentId, UUID authenticatedUserId, String content) {
+
+        if (ticketId == null || commentId == null || authenticatedUserId == null) {
+
+            return ServiceResponse.error(
+                    Response.Status.BAD_REQUEST,"Valid ticket, comment and user IDs required.");
+        }
+
+        if (!isValidContent(content)) {
+            return ServiceResponse.error(
+                    Response.Status.BAD_REQUEST,"Comment text must contain between 1 and 1000 characters.");
+        }
+
+        ServiceResponse<Tickets> accessResult = findAccessibleTicket(ticketId, authenticatedUserId);
+
+        if (accessResult.getStatus() != Response.Status.OK) {
+            return ServiceResponse.error(accessResult.getStatus(),accessResult.getMessage(),accessResult.getE());
+        }
+
+        Tickets ticket = accessResult.getValue();
+
+        if (ticket.getStatus() == null) {
+            return ServiceResponse.error(
+                    Response.Status.INTERNAL_SERVER_ERROR,"The ticket status could not be verified.");
+        }
+
+        if (ticket.getStatus() == Status.RESOLVED) {
+            return ServiceResponse.error(
+                    Response.Status.CONFLICT,"Comments on resolved tickets cannot be updated.");
+        }
+
+        try {
+            // Find the existing comment.
+            Optional<Comment> existingResult = commentRepo.findById(commentId);
+
+            if (existingResult.isEmpty()) {
+                return ServiceResponse.error( Response.Status.NOT_FOUND,"Comment not found.");
+            }
+
+            Comment existing = existingResult.get();
+
+            // Make sure the comment belongs to the ticket in the URL.
+            if (!existing.getTicketId().equals(ticketId)) {
+                return ServiceResponse.error(
+                        Response.Status.NOT_FOUND,
+                        "Comment not found for this ticket."
+                );
+            }
+
+            // Only the original author may update the comment.
+            if (!existing.getAuthorId().equals(authenticatedUserId)) {
+                return ServiceResponse.error(
+                        Response.Status.FORBIDDEN,
+                        "You can only update your own comments."
+                );
+            }
+
+            // Only update the content. Preserve all original metadata.
+            existing.setContent(content.trim());
+
+            Optional<Comment> updated =
+                    commentRepo.updateComment(existing);
+
+            if (updated.isEmpty()) {
+                return ServiceResponse.error(
+                        Response.Status.INTERNAL_SERVER_ERROR,
+                        "The comment could not be updated."
+                );
+            }
+
+            return ServiceResponse.success(
+                    updated.get(),
+                    "Comment updated successfully."
+            );
+
+        } catch (PersistenceException e) {
+            return ServiceResponse.error(
+                    Response.Status.INTERNAL_SERVER_ERROR,
+                    "An error occurred while updating the comment.",
+                    e
+            );
+        }
+    }
+
+    // Delete an existing comment.
+    @Override
+    public ServiceResponse<Comment> deleteComment(
+            UUID ticketId,
+            UUID commentId,
+            UUID authenticatedUserId) {
+
+        if (ticketId == null || commentId == null
+                || authenticatedUserId == null) {
+
+            return ServiceResponse.error(
+                    Response.Status.BAD_REQUEST,
+                    "Valid ticket, comment and user IDs are required."
+            );
+        }
+
+        // Check whether the user can access the ticket.
+        ServiceResponse<Tickets> accessResult =
+                findAccessibleTicket(ticketId, authenticatedUserId);
+
+        if (accessResult.getStatus() != Response.Status.OK) {
+            return ServiceResponse.error(
+                    accessResult.getStatus(),
+                    accessResult.getMessage(),
+                    accessResult.getE()
+            );
+        }
+
+        // Resolved tickets cannot be modified.
+        Tickets ticket = accessResult.getValue();
+
+        if (ticket.getStatus() == null) {
+            return ServiceResponse.error(
+                    Response.Status.INTERNAL_SERVER_ERROR,
+                    "The ticket status could not be verified."
+            );
+        }
+
+        if (ticket.getStatus() == Status.RESOLVED) {
+            return ServiceResponse.error(
+                    Response.Status.CONFLICT,
+                    "Comments on resolved tickets cannot be deleted."
+            );
+        }
+
+        try {
+            // Find the existing comment.
+            Optional<Comment> existingResult =
+                    commentRepo.findById(commentId);
+
+            if (existingResult.isEmpty()) {
+                return ServiceResponse.error(
+                        Response.Status.NOT_FOUND,
+                        "Comment not found."
+                );
+            }
+
+            Comment existing = existingResult.get();
+
+            // Make sure the comment belongs to the ticket in the URL.
+            if (!existing.getTicketId().equals(ticketId)) {
+                return ServiceResponse.error(
+                        Response.Status.NOT_FOUND,
+                        "Comment not found for this ticket."
+                );
+            }
+
+            // Only the original author may delete the comment.
+            if (!existing.getAuthorId().equals(authenticatedUserId)) {
+                return ServiceResponse.error(
+                        Response.Status.FORBIDDEN,
+                        "You can only delete your own comments."
+                );
+            }
+
+            Optional<Comment> deleted =
+                    commentRepo.deleteComment(existing);
+
+            if (deleted.isEmpty()) {
+                return ServiceResponse.error(
+                        Response.Status.INTERNAL_SERVER_ERROR,
+                        "The comment could not be deleted."
+                );
+            }
+
+            return ServiceResponse.success(
+                    deleted.get(),
+                    "Comment deleted successfully."
+            );
+
+        } catch (PersistenceException e) {
+            return ServiceResponse.error(
+                    Response.Status.INTERNAL_SERVER_ERROR,
+                    "An error occurred while deleting the comment.",
+                    e
+            );
+        }
+    }
+
+    // Check whether a user can access a particular ticket.
+    private ServiceResponse<Tickets> findAccessibleTicket(
+            UUID ticketId,
+            UUID userId) {
+
         final Optional<Tickets> ticketResult;
         final Optional<User> userResult;
+
         try {
-            userResult = userService.findById(userId); //waiting on user repo or service
+            userResult = userService.findById(userId);
+
             if (userResult.isEmpty() || !userResult.get().isActive()) {
-                return ServiceResponse.error(Response.Status.UNAUTHORIZED, "The authenticated account could not be verified.");
+                return ServiceResponse.error(
+                        Response.Status.UNAUTHORIZED,
+                        "The authenticated account could not be verified."
+                );
             }
+
             ticketResult = ticketService.findById(ticketId);
+
             if (ticketResult.isEmpty()) {
-                return ServiceResponse.error(Response.Status.NOT_FOUND, "Ticket not found.");
+                return ServiceResponse.error(
+                        Response.Status.NOT_FOUND,
+                        "Ticket not found."
+                );
             }
+
         } catch (PersistenceException e) {
-            return ServiceResponse.error(Response.Status.INTERNAL_SERVER_ERROR, "Ticket access not verified.", e);
+            return ServiceResponse.error(
+                    Response.Status.INTERNAL_SERVER_ERROR,
+                    "Ticket access could not be verified.",
+                    e
+            );
         }
 
         Tickets ticket = ticketResult.get();
         User user = userResult.get();
 
+        // Technicians can access any ticket.
         if (user.getRole() == Role.TECHNICIAN) {
-            return ServiceResponse.success(ticket, "access permitted.");
+            return ServiceResponse.success(ticket, "Access permitted.");
         }
 
-        if (user.getRole() == Role.CLIENT && ticket.getCreated_by() != null && ticket.getCreated_by().equals(userId.toString())) {
-            return ServiceResponse.success(ticket, "access permitted.");
+        // Clients can only access tickets they created.
+        if (user.getRole() == Role.CLIENT
+                && ticket.getCreated_by() != null
+                && ticket.getCreated_by().equals(userId.toString())) {
+
+            return ServiceResponse.success(ticket, "Access permitted.");
         }
 
-        return ServiceResponse.error(Response.Status.FORBIDDEN,"You do not have permission to access this ticket.");
+        return ServiceResponse.error(
+                Response.Status.FORBIDDEN,
+                "You do not have permission to access this ticket."
+        );
     }
 
-    private boolean isValidComment(Comment comment, boolean requireExistingFields) {
+    // Validate comment content.
+    private boolean isValidContent(String content) {
+
+        return content != null
+                && !content.isBlank()
+                && content.trim().length() <= MAX_COMMENT_LENGTH;
+    }
+
+    // Validate a Comment object.
+    private boolean isValidComment(
+            Comment comment,
+            boolean requireExistingFields) {
+
         if (comment == null
                 || comment.getTicketId() == null
                 || comment.getAuthorId() == null
-                || comment.getContent() == null
-                || comment.getContent().isBlank()
-                || comment.getContent().length() > MAX_COMMENT_LENGTH) {
+                || !isValidContent(comment.getContent())) {
+
             return false;
         }
+
         return !requireExistingFields
-                || (comment.getCommentId() != null && comment.getCreatedAt() != null);
+                || (comment.getCommentId() != null
+                && comment.getCreatedAt() != null);
     }
 }
