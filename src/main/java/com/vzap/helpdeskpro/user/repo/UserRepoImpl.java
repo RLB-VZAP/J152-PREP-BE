@@ -47,9 +47,37 @@ public class UserRepoImpl implements UserRepo {
     }
 
     @Override
-    public Optional<User> findById(UUID userId) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+public Optional<User> findById(UUID userId) {
+
+    String query = "SELECT * FROM user WHERE userId = ?";
+
+    try (Connection con = DBConfig.getCon();
+         PreparedStatement ps = con.prepareStatement(query)) {
+
+        ps.setString(1, userId.toString());
+
+        try (ResultSet rs = ps.executeQuery()) {
+
+            if (rs.next()) {
+                return Optional.of(
+                        User.builder()
+                                .userId(UUID.fromString(rs.getString("userId")))
+                                .email(rs.getString("email"))
+                                .fullName(rs.getString("fullName"))
+                                .passwordHash(rs.getString("passwordHash"))
+                                .role(Role.valueOf(rs.getString("role")))
+                                .active(rs.getBoolean("active"))
+                                .build()
+                );
+            }
+        }
+
+    } catch (SQLException e) {
+        LOG.log(System.Logger.Level.ERROR, e);
     }
+
+    return Optional.empty();
+}
 
     @Override
     public Optional<User> findByEmailAndPassword(User user) {

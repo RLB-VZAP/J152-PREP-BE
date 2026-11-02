@@ -1,6 +1,7 @@
 
 package com.vzap.helpdeskpro.ticket.Service;
 
+import com.vzap.helpdeskpro.commons.ServiceResponse;
 import com.vzap.helpdeskpro.ticket.model.Category;
 import com.vzap.helpdeskpro.ticket.model.Priority;
 import com.vzap.helpdeskpro.ticket.model.Status;
@@ -23,4 +24,6 @@ public interface TicketService
     List<Tickets> findAll();
     Optional<Tickets> updateTicket(Tickets tickets);
     Optional<Tickets> deleteTicket(Tickets tickets);
+    ServiceResponse<Tickets> getTicketDetails(UUID ticketId, UUID authenticatedUserId);
+    
 }

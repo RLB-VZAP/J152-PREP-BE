@@ -74,6 +74,7 @@ public class TicketRepoImpl implements TicketRepo
                 if (rs.next()) {
                     return Optional.of(
                             Tickets.builder()
+                                    .id(ticketId)
                                     .created_by(rs.getString("createdBy"))
                                     .assigned_to(rs.getString("assignedTo"))
                                     .title(rs.getString("title"))
@@ -277,8 +278,8 @@ public class TicketRepoImpl implements TicketRepo
     public Optional<Tickets> updateTicket(Tickets tickets) 
     {
         String query = "UPDATE ticket SET ticketId = ?, createdBy = ?, assignedTo = ?, title = ?, description = ?, category = ?, priority = ?, status = ?, createdAt + ?, resolvedAt = ? WHERE ticketId = ?";
-        try (Connection con = DBConfig.getCon(); PreparedStatement ps = con.prepareStatement(query)) 
-        {
+        try (Connection con = DBConfig.getCon(); PreparedStatement ps = con.prepareStatement(query)){ 
+        
             ps.setString(1, tickets.getId().toString());
             ps.setString(2, tickets.getCreated_by());
             ps.setString(3, tickets.getAssigned_to());
