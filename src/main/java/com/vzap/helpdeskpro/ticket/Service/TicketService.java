@@ -25,4 +25,5 @@ public interface TicketService
     Optional<Tickets> updateTicket(Tickets tickets);
     Optional<Tickets> deleteTicket(Tickets tickets);
     ServiceResponse<Tickets> getTicketDetails(UUID ticketId, UUID authenticatedUserId);
+    List<Tickets> findAllByClient(String client);
 }
