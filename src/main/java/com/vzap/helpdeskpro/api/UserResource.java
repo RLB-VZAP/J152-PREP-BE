@@ -8,6 +8,7 @@ import com.vzap.helpdeskpro.user.model.User;
 import com.vzap.helpdeskpro.user.service.UserService;
 import com.vzap.helpdeskpro.commons.ServiceResponse;
 import com.vzap.helpdeskpro.security.JwtService;
+import com.vzap.helpdeskpro.security.Secured;
 import com.vzap.helpdeskpro.user.model.Role;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
