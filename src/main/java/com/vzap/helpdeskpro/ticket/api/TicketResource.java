@@ -7,12 +7,11 @@ package com.vzap.helpdeskpro.ticket.api;
 import com.vzap.helpdeskpro.commons.ServiceResponse;
 import com.vzap.helpdeskpro.security.Secured;
 import com.vzap.helpdeskpro.ticket.Service.TicketService;
-import com.vzap.helpdeskpro.ticket.model.Status;
 import com.vzap.helpdeskpro.ticket.model.Tickets;
-import com.vzap.helpdeskpro.ticket.model.UpdateStatusRequest;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -20,16 +19,13 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
  *
  * @author LENOVO
  */
-@Path("/ticket")
-@Secured
-@Produces(MediaType.APPLICATION_JSON)
-@Consumes(MediaType.APPLICATION_JSON)
 public class TicketResource {
     
     @Inject
@@ -37,6 +33,61 @@ public class TicketResource {
 
     @Context
     private SecurityContext securityContext;
+    
+    @Path("/tickets")
+@Secured
+@Consumes(MediaType.APPLICATION_JSON)
+@Produces(MediaType.APPLICATION_JSON)
+
+    
+
+    @POST
+    public Response createTicket(TicketRequest request) {
+
+        try {
+
+            if (request==null) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Ticket information is required.").build();
+            }
+
+            if (securityContext.getUserPrincipal()== null) {
+                return Response.status(Response.Status.UNAUTHORIZED).entity("Authentication required.").build();
+            }
+
+            String userId = getAuthenticatedUserId().toString() ;
+
+            Tickets ticket = Tickets.builder().title(request.getTitle()).description(request.getDescription())
+                    .category(request.getCategory())
+                    .priority(request.getPriority())
+                    .created_by(userId)
+                    .build();
+
+            Optional<Tickets> result= ticketService.createTicket(ticket);
+
+            if (result.isPresent()) {
+
+                return Response.status(Response.Status.CREATED)
+                        .entity(result.get())
+                        .build();
+            }
+
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Unable to create ticket.")
+                    .build();
+
+        } catch (IllegalArgumentException e) {
+
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(e.getMessage())
+                    .build();
+
+        } catch (Exception e) {
+
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("An error occurred while creating the ticket.")
+                    .build();
+        }
+    }
 
     @GET
     @Path("/{ticketId}")
@@ -69,21 +120,7 @@ public class TicketResource {
 
         return Response.ok(result.getValue()).build();
     }
-    
-    @GET
-    @Path("api/{ticketId}/status")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response updateTicketStatus(@PathParam("ticketId") UUID ticketId, 
-            UpdateStatusRequest request
-    ){
-        Tickets updatedTicket = ticketService.updateStatus(
-                ticketId, 
-                request.getTarget(), 
-                request.getActor()
-        );
-        return Response.ok(updatedTicket).build();
-    }
+
     private UUID getAuthenticatedUserId() {
 
         if (securityContext == null ||
