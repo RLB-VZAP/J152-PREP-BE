@@ -30,7 +30,6 @@ import lombok.ToString;
 @Table(name = "tickets")
 
 
-
 public class Tickets 
 {
     private UUID id;
@@ -42,7 +41,6 @@ public class Tickets
     private Priority priority;
     private Status status;
     private Timestamp created_at;
-    private Timestamp resolved_at;
-    
+    private Timestamp resolved_at;   
 
 }

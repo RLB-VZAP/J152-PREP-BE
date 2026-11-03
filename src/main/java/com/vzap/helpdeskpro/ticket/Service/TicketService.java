@@ -6,6 +6,7 @@ import com.vzap.helpdeskpro.ticket.model.Category;
 import com.vzap.helpdeskpro.ticket.model.Priority;
 import com.vzap.helpdeskpro.ticket.model.Status;
 import com.vzap.helpdeskpro.ticket.model.Tickets;
+import com.vzap.helpdeskpro.user.model.User;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -25,5 +26,5 @@ public interface TicketService
     Optional<Tickets> updateTicket(Tickets tickets);
     Optional<Tickets> deleteTicket(Tickets tickets);
     ServiceResponse<Tickets> getTicketDetails(UUID ticketId, UUID authenticatedUserId);
-    List<Tickets> findAllByClient(String client);
+    Tickets updateStatus(UUID ticketId, Status target, User actor);
 }
