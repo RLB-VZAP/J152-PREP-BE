@@ -12,6 +12,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 /**
  *
@@ -23,9 +24,13 @@ import lombok.Setter;
 @Getter
 @Setter
 
+
 @ToString
 @Entity
 @Table(name = "tickets")
+
+
+@ToString
 
 public class Tickets 
 {
