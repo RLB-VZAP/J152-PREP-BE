@@ -121,4 +121,10 @@ public class TicketServiceImpl implements TicketService
     public ServiceResponse<Tickets> getTicketDetails(UUID ticketId, UUID authenticatedUserId) {
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
+    
+    @Override
+    public List<Tickets> findAllByClient(String client) 
+    {
+        return ticketRepo.findByCreator(client);
+    }
 }

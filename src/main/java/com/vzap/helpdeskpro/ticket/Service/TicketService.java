@@ -27,4 +27,5 @@ public interface TicketService
     Optional<Tickets> deleteTicket(Tickets tickets);
     ServiceResponse<Tickets> getTicketDetails(UUID ticketId, UUID authenticatedUserId);
     Tickets updateStatus(UUID ticketId, Status target, User actor);
+    public List<Tickets> findAllByClient(String client);
 }
