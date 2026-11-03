@@ -66,17 +66,17 @@ public class UserResource {
    @Path("/tickets")
    public Response createTicket(Tickets ticket){
        
-       TicketServiceImpl tsi = new TicketServiceImpl();
+       TicketServiceImpl ticketServiceImpl = new TicketServiceImpl();
        
-       Optional<Tickets> result = tsi.createTicket(ticket);
+       Optional<Tickets> result = ticketServiceImpl.createTicket(ticket);
       
        if(result.isEmpty()){
           return Response.status(Status.BAD_REQUEST)
                   .build();   
        }
 
-    return Response.status(Status.CREATED)
-            .build();
+        return Response.status(Status.CREATED)
+                .build();
 }
    
 

@@ -37,12 +37,9 @@ public class TicketServiceImpl implements TicketService
          }
         
          tickets.setStatus(Status.OPEN);
+         TicketRepoImpl ticketRepoImpl = new TicketRepoImpl();
          
-         tickets.setCreated_by("Current User");
-         
-         TicketRepoImpl tri = new TicketRepoImpl();
-         
-       return tri.createTicket(tickets);
+       return ticketRepoImpl.createTicket(tickets);
     }
     
     @Inject
