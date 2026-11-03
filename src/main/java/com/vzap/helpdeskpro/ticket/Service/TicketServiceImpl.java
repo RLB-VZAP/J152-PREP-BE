@@ -1,12 +1,14 @@
 
 package com.vzap.helpdeskpro.ticket.Service;
 
+import com.vzap.helpdeskpro.commons.ServiceResponse;
 import com.vzap.helpdeskpro.ticket.model.Category;
 import com.vzap.helpdeskpro.ticket.model.Priority;
 import com.vzap.helpdeskpro.ticket.model.Status;
 import com.vzap.helpdeskpro.ticket.model.Tickets;
 import com.vzap.helpdeskpro.ticket.repo.TicketRepo;
 import com.vzap.helpdeskpro.ticket.repo.TicketRepoImpl;
+
 import com.vzap.helpdeskpro.user.model.User;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
@@ -15,6 +17,12 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
+
+import com.vzap.helpdeskpro.user.model.Role;
+import com.vzap.helpdeskpro.user.model.User;
+import com.vzap.helpdeskpro.user.service.UserService;
+import jakarta.inject.Inject;
+
 import jakarta.ws.rs.core.Response;
 import java.util.List;
 import java.util.Optional;
@@ -28,8 +36,11 @@ import java.util.UUID;
 @Stateless
 public class TicketServiceImpl implements TicketService 
 {
+    
     private static final System.Logger LOG = System.getLogger(TicketRepoImpl.class.getName());
-
+    
+    @Inject
+    UserService userService;
     @Override
     public Optional<Tickets> createTicket(Tickets tickets) 
     {
