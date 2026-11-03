@@ -9,6 +9,7 @@ import com.vzap.helpdeskpro.user.service.UserService;
 import com.vzap.helpdeskpro.commons.ServiceResponse;
 import com.vzap.helpdeskpro.security.JwtService;
 import com.vzap.helpdeskpro.security.Secured;
+import com.vzap.helpdeskpro.ticket.Service.TicketService;
 import com.vzap.helpdeskpro.user.model.Role;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
@@ -21,6 +22,8 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import static jakarta.ws.rs.core.Response.Status;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  *
@@ -36,6 +39,8 @@ public class UserResource {
     private UserService userService;
     @Inject
     private JwtService jwtService;
+    @Inject
+    private TicketService ticketService;
 
     @POST
     @Path("/login")
@@ -118,4 +123,19 @@ public class UserResource {
          }
          return Response.status(Status.EXPECTATION_FAILED).entity("Unable to process this request at the moment").build();
      }
+     
+     @GET
+    @Path("/tickets")
+    public Response tickets(@QueryParam("token") String token) {
+
+        UUID userId = jwtService.getUserId(token);
+        Optional<User> user = userService.findById(userId);
+        if (user.isEmpty()) return Response.status(Response.Status.UNAUTHORIZED).entity("User account not found").build();
+        
+        if (user.get().getRole() == Role.TECHNICIAN) return Response.ok(ticketService.findAll()).build();
+
+        if (user.get().getRole() == Role.CLIENT) return Response.ok(ticketService.findAllByClient(user.get().getFullName())).build();
+
+        return Response.status(Response.Status.FORBIDDEN).entity("You are not authorized to view tickets").build();
+    }
 }
