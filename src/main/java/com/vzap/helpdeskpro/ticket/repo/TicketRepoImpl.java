@@ -281,7 +281,7 @@ public class TicketRepoImpl implements TicketRepo
     @Override
     public Optional<Tickets> updateTicket(Tickets tickets) 
     {
-        String query = "UPDATE ticket SET ticketId = ?, createdBy = ?, assignedTo = ?, title = ?, description = ?, category = ?, priority = ?, status = ?, createdAt + ?, resolvedAt = ? WHERE ticketId = ?";
+        String query = "UPDATE ticket SET ticketId = ?, createdBy = ?, assignedTo = ?, title = ?, description = ?, category = ?, priority = ?, status = ?, createdAt = ?, resolvedAt = ? WHERE ticketId = ?";
         try (Connection con = DBConfig.getCon(); PreparedStatement ps = con.prepareStatement(query)) 
         {
             ps.setString(1, tickets.getId().toString());
