@@ -9,7 +9,7 @@ import com.vzap.helpdeskpro.user.service.UserService;
 import com.vzap.helpdeskpro.commons.ServiceResponse;
 import com.vzap.helpdeskpro.security.JwtService;
 import com.vzap.helpdeskpro.security.Secured;
-import com.vzap.helpdeskpro.ticket.repo.TicketRepoImpl;
+import com.vzap.helpdeskpro.ticket.repo.TicketRepo;
 import com.vzap.helpdeskpro.user.model.Role;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
@@ -39,7 +39,7 @@ public class UserResource {
     @Inject
     private JwtService jwtService;
     @Inject
-    private TicketRepoImpl repo;
+    private TicketRepo repo; 
 
     @POST
     @Path("/login")
@@ -81,10 +81,15 @@ public class UserResource {
     
     @GET
     @Path("/tickets")
-    @Secured
-    public Response tickets(@QueryParam("userId") String userId) {
+    public Response tickets(@QueryParam("token") String token) {
 
-        Optional<User> user = userService.findById(UUID.fromString(userId));
+        UUID userId = jwtService.getUserId(token);
+        Optional<User> user = userService.findById(userId);
+        
+        
+        if (user.isEmpty()) {
+            return Response.status(Response.Status.UNAUTHORIZED).entity("User account not found").build();
+        }
         
         if (user.get().getRole() == Role.TECHNICIAN) {
             return Response.ok(repo.findAll()).build();
