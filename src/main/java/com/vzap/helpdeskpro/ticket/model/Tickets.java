@@ -30,7 +30,6 @@ import lombok.ToString;
 @Table(name = "tickets")
 
 
-@ToString
 
 public class Tickets 
 {

@@ -103,4 +103,9 @@ public class TicketServiceImpl implements TicketService
         if (!ticket.getAssigned_to().equals(actor.getUserId())) throw new ForbiddenException();
         return ticket;
     }
+
+    @Override
+    public ServiceResponse<Tickets> getTicketDetails(UUID ticketId, UUID authenticatedUserId) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
 }
