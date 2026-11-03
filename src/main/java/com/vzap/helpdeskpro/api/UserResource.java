@@ -14,11 +14,13 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import static jakarta.ws.rs.core.Response.Status;
+import java.util.List;
 
 /**
  *
@@ -72,4 +74,48 @@ public class UserResource {
             }
         };
     }
+    
+    @GET
+    @Path("/activeTechnicians")
+     public Response TechnicianList(@QueryParam("role")String role){
+        
+        ServiceResponse result = this.userService.getActiveTechs();
+         if(Role.valueOf(role) == Role.TECHNICIAN){
+            return switch(result.getStatus()){
+           
+                case OK -> {
+                
+                    yield Response.ok(result.getValue()).build();
+                }  
+                case BAD_REQUEST -> {
+                    yield Response.status(result.getStatus()).entity(result.getMessage()).build();
+                }
+                default -> {
+                     yield Response.status(Status.EXPECTATION_FAILED).entity("Unable to process this request at the moment").build();
+                }   
+            };
+     }
+         return Response.status(Status.EXPECTATION_FAILED).entity("Unable to process this request at the moment").build();
+        
+    }
+     @GET
+     @Path("/openTickets")
+     public Response getOpenTickets(@QueryParam("role") String role){
+         ServiceResponse result = this.userService.getOpenTickets();
+         
+         if(Role.valueOf(role) == Role.TECHNICIAN){
+            return switch(result.getStatus()){
+                case OK ->{
+                    yield Response.ok(result.getValue()).build();
+                }
+                case BAD_REQUEST ->{
+                    yield Response.status(result.getStatus()).entity(result.getMessage()).build();
+                }
+                default -> {
+                    yield Response.status(Status.EXPECTATION_FAILED).entity("Unable to process thid request at the moment").build();
+                }
+            };
+         }
+         return Response.status(Status.EXPECTATION_FAILED).entity("Unable to process this request at the moment").build();
+     }
 }

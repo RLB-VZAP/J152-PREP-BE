@@ -22,10 +22,10 @@ public interface UserService {
     ServiceResponse<User> register(User user);
     
     //list of active technicians
-    TreeMap<Integer,User>getActiveTechs();
+    ServiceResponse<List<User>>getActiveTechs();
     
     //list of Open Tickets
-    TreeMap<Integer,Tickets>getOpenTickets();
+    ServiceResponse<List<Tickets>>getOpenTickets();
     
     //assign ticket
     void assignTicket(User tech, Tickets ticket);
