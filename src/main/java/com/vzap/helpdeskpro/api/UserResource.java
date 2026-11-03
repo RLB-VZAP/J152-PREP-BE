@@ -21,9 +21,6 @@ import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import static jakarta.ws.rs.core.Response.Status;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 /**
  *
@@ -127,14 +124,11 @@ public class UserResource {
      @GET
     @Path("/tickets")
     public Response tickets(@QueryParam("token") String token) {
-
-        UUID userId = jwtService.getUserId(token);
-        Optional<User> user = userService.findById(userId);
-        if (user.isEmpty()) return Response.status(Response.Status.UNAUTHORIZED).entity("User account not found").build();
+        if (userService.findById(jwtService.getUserId(token)).isEmpty()) return Response.status(Response.Status.UNAUTHORIZED).entity("User account not found").build();
         
-        if (user.get().getRole() == Role.TECHNICIAN) return Response.ok(ticketService.findAll()).build();
+        if (userService.findById(jwtService.getUserId(token)).get().getRole() == Role.TECHNICIAN) return Response.ok(ticketService.findAll()).build();
 
-        if (user.get().getRole() == Role.CLIENT) return Response.ok(ticketService.findAllByClient(user.get().getFullName())).build();
+        if (userService.findById(jwtService.getUserId(token)).get().getRole() == Role.CLIENT) return Response.ok(ticketService.findAllByClient(userService.findById(jwtService.getUserId(token)).get().getFullName())).build();
 
         return Response.status(Response.Status.FORBIDDEN).entity("You are not authorized to view tickets").build();
     }
