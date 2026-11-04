@@ -37,7 +37,7 @@ public class TicketResource {
     @Context
     private SecurityContext securityContext;
     
-    @Path("/tickets")
+    @Path("/createTicket")
 @Secured
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
