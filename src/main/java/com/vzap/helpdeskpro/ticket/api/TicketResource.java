@@ -21,7 +21,8 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
 import java.util.Optional;
 import java.util.UUID;
-
+import com.vzap.helpdeskpro.ticket.model.Priority;
+import com.vzap.helpdeskpro.ticket.model.Category;
 /**
  *
  * @author LENOVO
@@ -30,11 +31,13 @@ public class TicketResource {
     
     @Inject
     private TicketService ticketService;
+    private Priority priority;
+    private Category category;
 
     @Context
     private SecurityContext securityContext;
     
-    @Path("/tickets")
+    @Path("/createTicket")
 @Secured
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
@@ -46,8 +49,16 @@ public class TicketResource {
 
         try {
 
-            if (request==null) {
+            if (request == null || request.getTitle() == null || request.getDescription() == null) {
                 return Response.status(Response.Status.BAD_REQUEST).entity("Ticket information is required.").build();
+            }
+            
+            if(!(request.getPriority() instanceof Priority)){
+                return Response.status(Response.Status.BAD_REQUEST).entity("Ticket priority is not valid. Can only be  LOW, MEDIUM, HIGH").build();
+            }
+            
+            if (!(request.getCategory() instanceof Category)){
+                return Response.status(Response.Status.BAD_REQUEST).entity("Ticket category is not valid. Can only be HARDWARE, SOFTWARE, NETWORK, OTHER").build();
             }
 
             if (securityContext.getUserPrincipal()== null) {
@@ -55,20 +66,24 @@ public class TicketResource {
             }
 
             String userId = getAuthenticatedUserId().toString() ;
-
-            Tickets ticket = Tickets.builder().title(request.getTitle()).description(request.getDescription())
-                    .category(request.getCategory())
-                    .priority(request.getPriority())
-                    .created_by(userId)
-                    .build();
-
-            Optional<Tickets> result= ticketService.createTicket(ticket);
-
-            if (result.isPresent()) {
-
-                return Response.status(Response.Status.CREATED)
-                        .entity(result.get())
+            
+            if(!(userId == null || userId.isEmpty())){
+            
+                Tickets ticket = Tickets.builder()
+                        .title(request.getTitle())
+                        .description(request.getDescription())
+                        .category(request.getCategory())
+                        .priority(request.getPriority())
+                        .created_by(userId)
                         .build();
+                
+                Optional<Tickets> result= ticketService.createTicket(ticket);
+                
+                if (result.isPresent()) {
+                    return Response.status(Response.Status.CREATED)
+                            .entity(result.get())
+                            .build();
+                }
             }
 
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
