@@ -1,9 +1,6 @@
 
 package com.vzap.helpdeskpro.ticket.model;
 
-import com.vzap.helpdeskpro.user.model.User;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -12,7 +9,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 
 /**
  *
@@ -23,13 +19,6 @@ import lombok.ToString;
 @Builder
 @Getter
 @Setter
-
-
-@ToString
-@Entity
-@Table(name = "tickets")
-
-
 public class Tickets 
 {
     private UUID id;
@@ -41,6 +30,5 @@ public class Tickets
     private Priority priority;
     private Status status;
     private Timestamp created_at;
-    private Timestamp resolved_at;   
-
+    private Timestamp resolved_at;
 }

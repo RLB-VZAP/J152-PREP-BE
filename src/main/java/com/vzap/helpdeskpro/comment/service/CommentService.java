@@ -27,12 +27,10 @@ public interface CommentService {
     Optional<Comment> updateComment(Comment comment);
 
     Optional<Comment> deleteComment(Comment comment);
+    
+    /// Validates and creates a comment using the authenticated /auth supplied by the REST layer
+    ServiceResponse<Comment> addComment(UUID ticketId, UUID authenticatedAuthorId, String content);
 
-    ServiceResponse<Comment> addComment(UUID ticketId,UUID authenticatedAuthorId,String content);
-
-    ServiceResponse<List<Comment>> getCommentsForTicket(UUID ticketId,UUID authenticatedUserId);
-
-    ServiceResponse<Comment> updateComment(UUID ticketId,UUID commentId,UUID authenticatedUserId,String content);
-
-    ServiceResponse<Comment> deleteComment(UUID ticketId,UUID commentId,UUID authenticatedUserId);
+    // Returns comments only after ticket existence and access permissions can be verified
+    ServiceResponse<List<Comment>> getCommentsForTicket(UUID ticketId, UUID authenticatedUserId);
 }

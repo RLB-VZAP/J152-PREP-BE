@@ -34,176 +34,57 @@ public class CommentResource {
     @Context
     private SecurityContext securityContext;
 
-    // GET all comments belonging to a ticket.
     @GET
     public Response getComments(@PathParam("ticketId") String ticketIdValue) {
-
         UUID ticketId = parseUuid(ticketIdValue);
-
         if (ticketId == null) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("Invalid ticket ID.")
-                    .build();
+            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid ticket ID.").build();
         }
 
         UUID userId = getAuthenticatedUserId();
-
         if (userId == null) {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity("Authentication is required.")
-                    .build();
+            return Response.status(Response.Status.UNAUTHORIZED).entity("Authentication is required.").build();
         }
 
-        ServiceResponse<List<Comment>> result =
-                commentService.getCommentsForTicket(ticketId, userId);
-
+        ServiceResponse<List<Comment>> result = commentService.getCommentsForTicket(ticketId, userId);
         if (result.getStatus() != Response.Status.OK) {
-            return Response.status(result.getStatus())
-                    .entity(result.getMessage())
-                    .build();
+            return Response.status(result.getStatus()).entity(result.getMessage()).build();
         }
-
         return Response.ok(result.getValue()).build();
     }
 
-    // POST a new comment to a ticket.
     @POST
-    public Response createComment(
-            @PathParam("ticketId") String ticketIdValue,
-            CommentRequest request) {
-
+    public Response createComment(@PathParam("ticketId") String ticketIdValue, CommentRequest request) {
         UUID ticketId = parseUuid(ticketIdValue);
-
         if (ticketId == null) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("Invalid ticket ID.")
-                    .build();
+            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid ticket ID.").build();
         }
-
         if (request == null) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("A comment body is required.")
-                    .build();
+            return Response.status(Response.Status.BAD_REQUEST).entity("A comment body is required.").build();
         }
 
         UUID userId = getAuthenticatedUserId();
-
         if (userId == null) {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity("Authentication is required.")
-                    .build();
+            return Response.status(Response.Status.UNAUTHORIZED).entity("Authentication is required.").build();
         }
 
-        ServiceResponse<Comment> result =
-                commentService.addComment(ticketId, userId, request.getContent());
-
+        ServiceResponse<Comment> result = commentService.addComment(ticketId, userId, request.getContent());
         if (result.getStatus() != Response.Status.OK) {
-            return Response.status(result.getStatus())
-                    .entity(result.getMessage())
-                    .build();
+            return Response.status(result.getStatus()).entity(result.getMessage()).build();
         }
 
-        return Response.status(Response.Status.CREATED)
-                .entity(result.getValue())
-                .build();
+        Comment saved = result.getValue();
+        return Response.status(Response.Status.CREATED).entity(saved).build();
     }
 
-    @PUT
-    @Path("/{commentId}")
-    public Response updateComment(
-            @PathParam("ticketId") String ticketIdValue,
-            @PathParam("commentId") String commentIdValue,
-            CommentRequest request) {
-
-        UUID ticketId = parseUuid(ticketIdValue);
-        UUID commentId = parseUuid(commentIdValue);
-
-        if (ticketId == null || commentId == null) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("Invalid ticket ID or comment ID.")
-                    .build();
-        }
-
-        if (request == null) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("A comment body is required.")
-                    .build();
-        }
-
-        UUID userId = getAuthenticatedUserId();
-
-        if (userId == null) {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity("Authentication is required.")
-                    .build();
-        }
-
-        ServiceResponse<Comment> result =
-                commentService.updateComment(
-                        ticketId,
-                        commentId,
-                        userId,
-                        request.getContent()
-                );
-
-        if (result.getStatus() != Response.Status.OK) {
-            return Response.status(result.getStatus())
-                    .entity(result.getMessage())
-                    .build();
-        }
-
-        return Response.ok(result.getValue()).build();
-    }
-
-    @DELETE
-    @Path("/{commentId}")
-    public Response deleteComment(
-            @PathParam("ticketId") String ticketIdValue,
-            @PathParam("commentId") String commentIdValue) {
-
-        UUID ticketId = parseUuid(ticketIdValue);
-        UUID commentId = parseUuid(commentIdValue);
-
-        if (ticketId == null || commentId == null) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("Invalid ticket ID or comment ID.")
-                    .build();
-        }
-
-        UUID userId = getAuthenticatedUserId();
-
-        if (userId == null) {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity("Authentication is required.")
-                    .build();
-        }
-
-        ServiceResponse<Comment> result =
-                commentService.deleteComment(ticketId, commentId, userId);
-
-        if (result.getStatus() != Response.Status.OK) {
-            return Response.status(result.getStatus())
-                    .entity(result.getMessage())
-                    .build();
-        }
-
-        return Response.noContent().build();
-    }
-
-    // Get the authenticated user's ID from the JWT principal.
     private UUID getAuthenticatedUserId() {
-
-        if (securityContext == null
-                || securityContext.getUserPrincipal() == null) {
+        if (securityContext == null || securityContext.getUserPrincipal() == null) {
             return null;
         }
-
         return parseUuid(securityContext.getUserPrincipal().getName());
     }
 
-    // Safely convert a String into a UUID.
     private UUID parseUuid(String value) {
-
         try {
             return value == null ? null : UUID.fromString(value);
         } catch (IllegalArgumentException ex) {
@@ -211,3 +92,4 @@ public class CommentResource {
         }
     }
 }
+

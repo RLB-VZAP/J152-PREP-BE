@@ -26,5 +26,4 @@ public interface TicketRepo
     List<Tickets> findAll();
     Optional<Tickets> updateTicket(Tickets tickets);
     Optional<Tickets> deleteTicket(Tickets tickets);
-    List<Tickets> findByCreator(String creator);
 }
