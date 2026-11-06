@@ -23,13 +23,7 @@ import lombok.ToString;
 @Builder
 @Getter
 @Setter
-
-
 @ToString
-@Entity
-@Table(name = "tickets")
-
-
 public class Tickets 
 {
     private UUID id;

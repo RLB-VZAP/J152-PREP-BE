@@ -20,7 +20,7 @@ public class DBConfig {
         dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
         dataSource.setUsername("root");
         dataSource.setPassword("root");
-        dataSource.setUrl("jdbc:mysql://localhost:3306/helpdeskpro?useSSL=false");
+        dataSource.setUrl("jdbc:mysql://localhost:3306/helpdeskpro?useSSL=false&allowPublicKeyRetrieval=true");
         dataSource.setMaxIdle(50);
         dataSource.setMaxOpenPreparedStatements(100);
         dataSource.setMinIdle(5);
