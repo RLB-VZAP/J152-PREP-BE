@@ -9,21 +9,18 @@ import com.vzap.helpdeskpro.user.service.UserService;
 import com.vzap.helpdeskpro.commons.ServiceResponse;
 import com.vzap.helpdeskpro.security.JwtService;
 import com.vzap.helpdeskpro.security.Secured;
+import com.vzap.helpdeskpro.ticket.Service.TicketService;
 import com.vzap.helpdeskpro.user.model.Role;
-import com.vzap.helpdeskpro.ticket.model.Tickets;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import java.util.Optional;
 import static jakarta.ws.rs.core.Response.Status;
-import com.vzap.helpdeskpro.ticket.repo.TicketRepoImpl;
-import com.vzap.helpdeskpro.ticket.Service.TicketServiceImpl;
-import java.util.HashSet;
 
 /**
  *
@@ -39,6 +36,8 @@ public class UserResource {
     private UserService userService;
     @Inject
     private JwtService jwtService;
+    @Inject
+    private TicketService ticketService;
 
     @POST
     @Path("/login")
@@ -58,27 +57,6 @@ public class UserResource {
                     .build();
         }
     }
-  
-    
-   
-   
-   @POST
-   @Path("/tickets")
-   public Response createTicket(Tickets ticket){
-       
-       TicketServiceImpl ticketServiceImpl = new TicketServiceImpl();
-       
-       Optional<Tickets> result = ticketServiceImpl.createTicket(ticket);
-      
-       if(result.isEmpty()){
-          return Response.status(Status.BAD_REQUEST)
-                  .build();   
-       }
-
-        return Response.status(Status.CREATED)
-                .build();
-}
-   
 
     @POST
     @Path("register")
@@ -97,5 +75,61 @@ public class UserResource {
                 yield Response.status(Status.EXPECTATION_FAILED).entity("Unable to process this request at the moment").build();
             }
         };
+    }
+    
+    @GET
+    @Path("/activeTechnicians")
+     public Response TechnicianList(@QueryParam("role")String role){
+        
+        ServiceResponse result = this.userService.getActiveTechs();
+         if(Role.valueOf(role) == Role.TECHNICIAN){
+            return switch(result.getStatus()){
+           
+                case OK -> {
+                
+                    yield Response.ok(result.getValue()).build();
+                }  
+                case BAD_REQUEST -> {
+                    yield Response.status(result.getStatus()).entity(result.getMessage()).build();
+                }
+                default -> {
+                     yield Response.status(Status.EXPECTATION_FAILED).entity("Unable to process this request at the moment").build();
+                }   
+            };
+     }
+         return Response.status(Status.EXPECTATION_FAILED).entity("Unable to process this request at the moment").build();
+        
+    }
+     @GET
+     @Path("/openTickets")
+     public Response getOpenTickets(@QueryParam("role") String role){
+         ServiceResponse result = this.userService.getOpenTickets();
+         
+         if(Role.valueOf(role) == Role.TECHNICIAN){
+            return switch(result.getStatus()){
+                case OK ->{
+                    yield Response.ok(result.getValue()).build();
+                }
+                case BAD_REQUEST ->{
+                    yield Response.status(result.getStatus()).entity(result.getMessage()).build();
+                }
+                default -> {
+                    yield Response.status(Status.EXPECTATION_FAILED).entity("Unable to process thid request at the moment").build();
+                }
+            };
+         }
+         return Response.status(Status.EXPECTATION_FAILED).entity("Unable to process this request at the moment").build();
+     }
+     
+     @GET
+    @Path("/tickets")
+    public Response tickets(@QueryParam("token") String token) {
+        if (userService.findById(jwtService.getUserId(token)).isEmpty()) return Response.status(Response.Status.UNAUTHORIZED).entity("User account not found").build();
+        
+        if (userService.findById(jwtService.getUserId(token)).get().getRole() == Role.TECHNICIAN) return Response.ok(ticketService.findAll()).build();
+
+        if (userService.findById(jwtService.getUserId(token)).get().getRole() == Role.CLIENT) return Response.ok(ticketService.findAllByClient(userService.findById(jwtService.getUserId(token)).get().getFullName())).build();
+
+        return Response.status(Response.Status.FORBIDDEN).entity("You are not authorized to view tickets").build();
     }
 }

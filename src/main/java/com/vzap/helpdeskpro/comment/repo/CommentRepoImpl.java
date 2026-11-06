@@ -11,12 +11,11 @@ package com.vzap.helpdeskpro.comment.repo;
 import com.vzap.helpdeskpro.comment.model.Comment;
 import com.vzap.helpdeskpro.config.DBConfig;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Singleton;
+import jakarta.persistence.PersistenceException;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.*;
 
-@Singleton
 @ApplicationScoped
 public class CommentRepoImpl implements CommentRepo {
     
@@ -29,7 +28,8 @@ public class CommentRepoImpl implements CommentRepo {
         if (comment == null || comment.getTicketId() == null 
                 || comment.getAuthorId() == null
                 || comment.getContent() == null 
-                || comment.getContent().isBlank()) {
+                || comment.getContent().isBlank()
+                || comment.getContent().length() > 1000) {
             
             return Optional.empty();
         }
@@ -71,7 +71,7 @@ public class CommentRepoImpl implements CommentRepo {
         String sql = "SELECT * FROM comment WHERE commentId = ?";
 
         try (Connection con = DBConfig.getCon();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+                PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setString(1, commentId.toString());
 
@@ -93,7 +93,7 @@ public class CommentRepoImpl implements CommentRepo {
             return comments;
         }
 
-        String sql = "SELECT * FROM comment WHERE ticketId = ? ORDER BY createdAt";
+        String sql = "SELECT * FROM comment WHERE ticketId = ? ORDER BY createdAt ASC, commentId ASC";
 
         try (Connection con = DBConfig.getCon();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -108,6 +108,7 @@ public class CommentRepoImpl implements CommentRepo {
 
         } catch (SQLException e) {
             LOG.log(System.Logger.Level.ERROR, "Unable to retrieve ticket comments", e);
+            throw new PersistenceException("Unable to retrieve ticket comments.", e);
         }
 
         return comments;
@@ -117,10 +118,10 @@ public class CommentRepoImpl implements CommentRepo {
     public List<Comment> findAll() {
         List<Comment> comments = new ArrayList<>();
 
-        String sql = "SELECT * FROM comment ORDER BY createdAt";
+        String sql = "SELECT * FROM comment ORDER BY createdAt ASC, commentId ASC";
 
         try (Connection con = DBConfig.getCon();
-             PreparedStatement ps = con.prepareStatement(sql);
+                    PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
@@ -141,6 +142,8 @@ public class CommentRepoImpl implements CommentRepo {
                 || comment.getTicketId() == null
                 || comment.getAuthorId() == null 
                 || comment.getContent() == null 
+                || comment.getContent().isBlank()
+                || comment.getContent().length() > 1000
                 || comment.getCreatedAt() == null) {
             return Optional.empty();
         }
@@ -148,7 +151,7 @@ public class CommentRepoImpl implements CommentRepo {
         String sql = "UPDATE comment SET ticketId = ?, authorId = ?, content = ?, createdAt = ? WHERE commentId = ?";
 
         try (Connection con = DBConfig.getCon();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+                PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setString(1, comment.getTicketId().toString());
             ps.setString(2, comment.getAuthorId().toString());
@@ -177,8 +180,8 @@ public class CommentRepoImpl implements CommentRepo {
 
         String sql = "DELETE FROM comment WHERE commentId = ?";
 
-        try (Connection con = DBConfig.getCon();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = DBConfig.getCon(); 
+              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setString(1, comment.getCommentId().toString());
 

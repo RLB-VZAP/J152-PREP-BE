@@ -36,7 +36,7 @@ public class TicketRepoImpl implements TicketRepo
     @Override
     public Optional<Tickets> createTicket(Tickets tickets) 
     {
-        String query = "INSERT INTO ticket(ticketId, createdBy, assignedTo, title, description, category, priority, status, createdAt, resolvedAt) VALUES(?,?,?,?,?)";
+        String query = "INSERT INTO ticket(ticketId, createdBy, assignedTo, title, description, category, priority, status, createdAt, resolvedAt) VALUES(?,?,?,?,?,?,?,?,?,?)";
         try (Connection con = DBConfig.getCon(); PreparedStatement ps = con.prepareStatement(query)) 
         {
             ps.setString(1, tickets.getId().toString());
@@ -74,6 +74,7 @@ public class TicketRepoImpl implements TicketRepo
                 if (rs.next()) {
                     return Optional.of(
                             Tickets.builder()
+                                    .id(UUID.fromString(rs.getString("ticketId")))
                                     .created_by(rs.getString("createdBy"))
                                     .assigned_to(rs.getString("assignedTo"))
                                     .title(rs.getString("title"))
@@ -113,6 +114,7 @@ public class TicketRepoImpl implements TicketRepo
                 {
                     categories.add( 
                             Tickets.builder()
+                                    .id(UUID.fromString(rs.getString("ticketId")))
                                     .created_by(rs.getString("createdBy"))
                                     .assigned_to(rs.getString("assignedTo"))
                                     .title(rs.getString("title"))
@@ -158,6 +160,7 @@ public class TicketRepoImpl implements TicketRepo
                 {
                     priorities.add( 
                             Tickets.builder()
+                                    .id(UUID.fromString(rs.getString("ticketId")))
                                     .created_by(rs.getString("createdBy"))
                                     .assigned_to(rs.getString("assignedTo"))
                                     .title(rs.getString("title"))
@@ -203,6 +206,7 @@ public class TicketRepoImpl implements TicketRepo
                 {
                     statuses.add( 
                             Tickets.builder()
+                                    .id(UUID.fromString(rs.getString("ticketId")))
                                     .created_by(rs.getString("createdBy"))
                                     .assigned_to(rs.getString("assignedTo"))
                                     .title(rs.getString("title"))
@@ -246,6 +250,7 @@ public class TicketRepoImpl implements TicketRepo
                 {
                     ticks.add( 
                             Tickets.builder()
+                                    .id(UUID.fromString(rs.getString("ticketId")))
                                     .created_by(rs.getString("createdBy"))
                                     .assigned_to(rs.getString("assignedTo"))
                                     .title(rs.getString("title"))
@@ -276,7 +281,7 @@ public class TicketRepoImpl implements TicketRepo
     @Override
     public Optional<Tickets> updateTicket(Tickets tickets) 
     {
-        String query = "UPDATE ticket SET ticketId = ?, createdBy = ?, assignedTo = ?, title = ?, description = ?, category = ?, priority = ?, status = ?, createdAt + ?, resolvedAt = ? WHERE ticketId = ?";
+        String query = "UPDATE ticket SET ticketId = ?, createdBy = ?, assignedTo = ?, title = ?, description = ?, category = ?, priority = ?, status = ?, createdAt = ?, resolvedAt = ? WHERE ticketId = ?";
         try (Connection con = DBConfig.getCon(); PreparedStatement ps = con.prepareStatement(query)) 
         {
             ps.setString(1, tickets.getId().toString());
@@ -321,5 +326,48 @@ public class TicketRepoImpl implements TicketRepo
         return Optional.empty();
     }
     
-    
+    @Override
+    // Method added to receive the tickets by the creator
+    public List<Tickets> findByCreator(String creator) 
+    {
+        List<Tickets> tickets = new ArrayList<>();
+        
+        String sql = "SELECT * FROM ticket WHERE createdBy = ? ORDER BY createdAt";
+
+        try (Connection con = DBConfig.getCon();
+             PreparedStatement ps = con.prepareStatement(sql)) 
+        {
+             ps.setString(1, creator);
+            try(ResultSet rs = ps.executeQuery())
+            {
+                while (rs.next()) 
+                {
+                    tickets.add( 
+                            Tickets.builder()
+                                    .created_by(rs.getString("createdBy"))
+                                    .assigned_to(rs.getString("assignedTo"))
+                                    .title(rs.getString("title"))
+                                    .description(rs.getString("description"))
+                                    .category(Category.valueOf(rs.getString("category")))
+                                    .priority(Priority.valueOf(rs.getString("priority")))
+                                    .status(Status.valueOf(rs.getString("status")))
+                                    .created_at(rs.getTimestamp("createdAt"))
+                                    .resolved_at(rs.getTimestamp("resolvedAt"))
+                                    .build()         
+                   );
+                }
+            }
+            catch (SQLException e) 
+            {
+                e.printStackTrace();
+            }
+
+        } 
+         catch (SQLException e) 
+        {
+            LOG.log(System.Logger.Level.ERROR, e);
+        }
+
+        return tickets;
+    }
 }
