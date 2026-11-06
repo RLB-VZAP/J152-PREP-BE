@@ -25,6 +25,7 @@ import jakarta.inject.Inject;
 
 import jakarta.ws.rs.core.Response;
 import java.sql.Timestamp;
+import java.util.*;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -166,7 +167,7 @@ public class TicketServiceImpl implements TicketService
     public Tickets updateStatus(UUID ticketId, Status target, User actor){
         Tickets ticket = em.find(Tickets.class, ticketId);
         if (ticket == null) throw new NotFoundException();
-        if (!ticket.getStatus().canTransitionTo(target)) throw new ClientErrorException(Response.Status.CONFLICT);
+        //if (!ticket.getStatus().canTransitionTo(target)) throw new ClientErrorException(Response.Status.CONFLICT);
         if (ticket.getAssigned_to() == null) throw new ClientErrorException("Ticket has no assignee", Response.Status.CONFLICT);
         if (!ticket.getAssigned_to().equals(actor.getUserId())) throw new ForbiddenException();
         return ticket;
@@ -180,6 +181,7 @@ public class TicketServiceImpl implements TicketService
     @Override
     public List<Tickets> findAllByClient(String client) 
     {
-        return ticketRepo.findByCreator(client);
+        throw new RuntimeException("Method does not exist"); //needs implementation
+        // return ticketRepo.findByCreator(client)
     }
 }
